@@ -20,7 +20,6 @@ const addressSchema = new mongoose.Schema({
     state:{
         type:String,
         required:true,
-        default:"CUSTOMER"
     },
     zipCode:{
         type:Number,
@@ -30,10 +29,10 @@ const addressSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref:"users"
     },
-    mobile:[{
-        type: mongoose.Schema.Types.ObjectId,
-        ref:"payment_information"
-    }],
+    mobile:{
+        type:Number,
+        required:true
+    },
 })
 
 const Address = mongoose.models.addresses || mongoose.model("addresses",addressSchema);

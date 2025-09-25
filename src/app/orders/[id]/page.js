@@ -71,7 +71,6 @@ const OrderDetail = () => {
 
   const handleSubmitRating = () => {
     // Handle rating submission logic here
-    console.log('Rating submitted:', { product: currentProduct, rating, review });
     setShowRatingModal(false);
   };
 

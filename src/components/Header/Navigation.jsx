@@ -44,38 +44,27 @@ const navigation = {
           id: 'clothing',
           name: 'Clothing',
           items: [
-            { name: 'Tops', href: '#' },
-            { name: 'Dresses', href: '#' },
-            { name: 'Pants', href: '#' },
-            { name: 'Denim', href: '#' },
-            { name: 'Sweaters', href: '#' },
-            { name: 'T-Shirts', href: '#' },
-            { name: 'Jackets', href: '#' },
-            { name: 'Activewear', href: '#' },
-            { name: 'Browse All', href: '#' },
+            { name: 'Tops', href: '/product/women/clothing/tops' },
+            { name: 'Dresses', href: '/product/women/clothing/dressses' },
+            { name: 'Pants', href: '/product/women/clothing/pants' },
+            { name: 'Denim', href: '/product/women/clothing/denim' },
+            { name: 'Sweaters', href: '/product/women/clothing/sweaters' },
+            { name: 'T-Shirts', href: '/product/women/clothing/tshirts' },
+            { name: 'Jackets', href: '/product/women/clothing/jackets' },
+            { name: 'Activewear', href: '/product/women/clothing/activewear' },
+            { name: 'Browse All', href: '/product/women/clothing/browseall' },
           ],
         },
         {
           id: 'accessories',
           name: 'Accessories',
           items: [
-            { name: 'Watches', href: '#' },
-            { name: 'Wallets', href: '#' },
-            { name: 'Bags', href: '#' },
-            { name: 'Sunglasses', href: '#' },
-            { name: 'Hats', href: '#' },
-            { name: 'Belts', href: '#' },
-          ],
-        },
-        {
-          id: 'brands',
-          name: 'Brands',
-          items: [
-            { name: 'Full Nelson', href: '#' },
-            { name: 'My Way', href: '#' },
-            { name: 'Re-Arranged', href: '#' },
-            { name: 'Counterfeit', href: '#' },
-            { name: 'Significant Other', href: '#' },
+            { name: 'Watches', href: '/product/women/accessories/watches' },
+            { name: 'Wallets', href: '/product/women/accessories/wallets' },
+            { name: 'Bags', href: '/product/women/accessories/bags' },
+            { name: 'Sunglasses', href: '/product/women/accessories/sunglasses' },
+            { name: 'Hats', href: '/product/women/accessories/hats' },
+            { name: 'Belts', href: '/product/women/accessories/belts' },
           ],
         },
       ],
@@ -104,35 +93,25 @@ const navigation = {
           id: 'clothing',
           name: 'Clothing',
           items: [
-            { name: 'Tops', href: '#' },
-            { name: 'Pants', href: '#' },
-            { name: 'Sweaters', href: '#' },
-            { name: 'T-Shirts', href: '#' },
-            { name: 'Jackets', href: '#' },
-            { name: 'Activewear', href: '#' },
-            { name: 'Browse All', href: '#' },
+            { name: 'Shirts', href: '/product/men/clothing/shirts' },
+            { name: 'Pants', href: '/product/men/clothing/pants' },
+            { name: 'Sweaters', href: '/product/men/clothing/sweaters' },
+            { name: 'T-Shirts', href: '/product/men/clothing/tshirts' },
+            { name: 'Jackets', href: '/product/men/clothing/jackets' },
+            { name: 'Activewear', href: '/product/men/clothing/activewear' },
+            { name: 'Browse All', href: '/product/men/clothing/browseall' },
           ],
         },
         {
           id: 'accessories',
           name: 'Accessories',
           items: [
-            { name: 'Watches', href: '#' },
-            { name: 'Wallets', href: '#' },
-            { name: 'Bags', href: '#' },
-            { name: 'Sunglasses', href: '#' },
-            { name: 'Hats', href: '#' },
-            { name: 'Belts', href: '#' },
-          ],
-        },
-        {
-          id: 'brands',
-          name: 'Brands',
-          items: [
-            { name: 'Re-Arranged', href: '#' },
-            { name: 'Counterfeit', href: '#' },
-            { name: 'Full Nelson', href: '#' },
-            { name: 'My Way', href: '#' },
+            { name: 'Watches', href: '/product/men/accessories/watches' },
+            { name: 'Wallets', href: '/product/men/accessories/wallets' },
+            { name: 'Bags', href: '/product/men/accessories/bags' },
+            { name: 'Sunglasses', href: '/product/men/accessories/sunglasses' },
+            { name: 'Hats', href: '/product/men/accessories/hats' },
+            { name: 'Belts', href: '/product/men/accessories/belts' },
           ],
         },
       ],
@@ -149,13 +128,12 @@ export default function Navigation() {
   const [me, setMe] = useState(false)
   const [loading, setLoading] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  
-  const onLogout =  () => {
+  const [cartItems, setCartItems] = useState(0);
+  const onLogout = async() => {
     setLoading(true);
     setShowProfileDropdown(false);
     try {
       const res = axios.post('/api/users/logout');
-      console.log(res.data);  
       setMe(false);
       setLoading(false);
       toast.success('Logout successful');
@@ -164,32 +142,67 @@ export default function Navigation() {
       toast.error("Something went wrong while logging out.");
     }
   }
+
   useEffect(() => {
-  let isMounted = true; 
-  const fetchUserData = async () => {
+  let isMounted = true;
+
+  const fetchUser = async () => {
     try {
-      setLoading(true);
       const res = await axios.post('/api/users/me');
-      if (isMounted) {
-        setMe(res.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch user data:", error);
-      if (isMounted) {
-        setMe(false);
-      }
-    } finally {
-      if (isMounted) {
-        setLoading(false);
-      }
+      if (isMounted) setMe(res.data);
+    } catch {
+      if (isMounted) setMe(false);
     }
   };
 
-  fetchUserData();
+  const fetchCart = async () => {
+    try {
+      const res = await axios.get('/api/cart');
+      if (isMounted) setCartItems(res.data.cart.totalItem);
+    } catch (err) {
+      console.error("Cart fetch failed:", err);
+    }
+  };
+
+  setLoading(true);
+  fetchUser();
+  fetchCart();
+  setLoading(false);
+
   return () => {
     isMounted = false;
   };
-}, []); 
+}, []);
+
+  // useEffect(() => {
+  //   let isMounted = true;
+  //   const fetchUserData = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const res = await axios.post('/api/users/me');
+  //       const response = await axios.get('/api/cart');
+
+  //       setCartItems(response.data.cart.totalItem);
+  //       if (isMounted) {
+  //         setMe(res.data);
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to fetch user data:", error);
+  //       if (isMounted) {
+  //         setMe(false);
+  //       }
+  //     } finally {
+  //       if (isMounted) {
+  //         setLoading(false);
+  //       }
+  //     }
+  //   };
+
+  //   fetchUserData();
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, []);
 
   return (
     <div className="bg-white">
@@ -215,8 +228,6 @@ export default function Navigation() {
                 <XMarkIcon aria-hidden="true" className="size-6" />
               </button>
             </div>
-
-            {/* Links */}
             <TabGroup className="mt-2">
               <div className="border-b border-gray-200">
                 <TabList className="-mb-px flex space-x-8 px-4">
@@ -263,9 +274,9 @@ export default function Navigation() {
                         >
                           {section.items.map((item) => (
                             <li key={item.name} className="flow-root">
-                              <a href={item.href} className="-m-2 block p-2 text-gray-500">
+                              <Link href={item.href} className="-m-2 block p-2 text-gray-500">
                                 {item.name}
-                              </a>
+                              </Link>
                             </li>
                           ))}
                         </ul>
@@ -276,7 +287,7 @@ export default function Navigation() {
               </TabPanels>
             </TabGroup>
 
-            <div className="space-y-6 border-t border-gray-200 px-4 py-6">
+            {/* <div className="space-y-6 border-t border-gray-200 px-4 py-6">
               {navigation.pages.map((page) => (
                 <div key={page.name} className="flow-root">
                   <a href={page.href} className="-m-2 block p-2 font-medium text-gray-900">
@@ -284,7 +295,7 @@ export default function Navigation() {
                   </a>
                 </div>
               ))}
-            </div>
+            </div> */}
 
             <div className="space-y-6 border-t border-gray-200 px-4 py-6">
               <div className="flow-root">
@@ -314,7 +325,7 @@ export default function Navigation() {
         </div>
       </Dialog>
       {loading && (
-       <Loading />
+        <Loading />
       )}
       <header className="relative bg-white">
         <p className="flex h-10 items-center justify-center bg-indigo-600 px-4 text-sm font-medium text-white sm:px-6 lg:px-8">
@@ -400,9 +411,9 @@ export default function Navigation() {
                                     >
                                       {section.items.map((item) => (
                                         <li key={item.name} className="flex">
-                                          <a href={item.href} className="hover:text-gray-800">
+                                          <Link href={item.href} className="hover:text-gray-800">
                                             {item.name}
-                                          </a>
+                                          </Link>
                                         </li>
                                       ))}
                                     </ul>
@@ -415,7 +426,7 @@ export default function Navigation() {
                       </PopoverPanel>
                     </Popover>
                   ))}
-                  {navigation.pages.map((page) => (
+                  {/* {navigation.pages.map((page) => (
                     <a
                       key={page.name}
                       href={page.href}
@@ -423,75 +434,75 @@ export default function Navigation() {
                     >
                       {page.name}
                     </a>
-                  ))}
+                  ))} */}
                 </div>
               </PopoverGroup>
 
               <div className="ml-auto flex items-center">
                 {me ? (
-  <div className="relative">
-    <button 
-      className="flex items-center space-x-1 focus:outline-none"
-      onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-    >
-      <i className="fa-solid fa-circle-user text-2xl text-indigo-600 hover:text-indigo-700"></i>
-     
-    </button>
-    {/* desktop profile dropdown  */}
-    {showProfileDropdown && (
-      <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-        <div className="py-1">
-          <Link
-            href="/account"
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            <i className="fa-solid fa-user mr-2 text-indigo-500"></i>
-            My Profile
-          </Link>
-          <Link
-            href="/orders"
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            <i className="fa-solid fa-box-open mr-2 text-indigo-500"></i>
-            My Orders
-          </Link>
-          <Link
-            href="/cart"
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            <i className="fa-solid fa-cart-shopping mr-2 text-indigo-500"></i>
-            My Cart
-          </Link>
-          <Link
-            href="/wishlist"
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            <i className="fa-solid fa-heart mr-2 text-indigo-500"></i>
-            Wishlist
-          </Link>
-          <div className="border-t border-gray-200"></div>
-          <button
-            onClick={onLogout}
-            className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            <i className="fa-solid fa-arrow-right-from-bracket mr-2 text-indigo-500"></i>
-            logout
-          </button>
-        </div>
-      </div>
-    )}
-  </div>
-) : (
-  <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6">
-    <a href="/auth/login" className="text-sm font-medium text-gray-700 hover:text-gray-800">
-      Sign in
-    </a>
-    <span aria-hidden="true" className="h-6 w-px bg-gray-200" />
-    <a href="/auth/signup" className="text-sm font-medium text-gray-700 hover:text-gray-800">
-      Create account
-    </a>
-  </div>
-)}
+                  <div className="relative">
+                    <button
+                      className="flex items-center space-x-1 focus:outline-none"
+                      onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                    >
+                      <i className="fa-solid fa-circle-user text-2xl text-indigo-600 hover:text-indigo-700"></i>
+
+                    </button>
+                    {/* desktop profile dropdown  */}
+                    {showProfileDropdown && (
+                      <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                        <div className="py-1">
+                          <Link
+                            href="/account"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            <i className="fa-solid fa-user mr-2 text-indigo-500"></i>
+                            My Profile
+                          </Link>
+                          <Link
+                            href="/orders"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            <i className="fa-solid fa-box-open mr-2 text-indigo-500"></i>
+                            My Orders
+                          </Link>
+                          <Link
+                            href="/cart"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            <i className="fa-solid fa-cart-shopping mr-2 text-indigo-500"></i>
+                            My Cart
+                          </Link>
+                          <Link
+                            href="/wishlist"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            <i className="fa-solid fa-heart mr-2 text-indigo-500"></i>
+                            Wishlist
+                          </Link>
+                          <div className="border-t border-gray-200"></div>
+                          <button
+                            onClick={onLogout}
+                            className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            <i className="fa-solid fa-arrow-right-from-bracket mr-2 text-indigo-500"></i>
+                            logout
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6">
+                    <a href="/auth/login" className="text-sm font-medium text-gray-700 hover:text-gray-800">
+                      Sign in
+                    </a>
+                    <span aria-hidden="true" className="h-6 w-px bg-gray-200" />
+                    <a href="/auth/signup" className="text-sm font-medium text-gray-700 hover:text-gray-800">
+                      Create account
+                    </a>
+                  </div>
+                )}
                 {/* Search */}
                 <div className="flex lg:ml-6">
                   <a href="#" className="p-2 text-gray-400 hover:text-gray-500">
@@ -507,7 +518,7 @@ export default function Navigation() {
                       aria-hidden="true"
                       className="size-6 shrink-0 text-gray-400 group-hover:text-gray-500"
                     />
-                    <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-gray-800">0</span>
+                    <span className="ml-2 text-md font-medium text-gray-700 font-bold group-hover:text-gray-800">{cartItems}</span>
                     <span className="sr-only">items in cart, view bag</span>
                   </Link>
                 </div>

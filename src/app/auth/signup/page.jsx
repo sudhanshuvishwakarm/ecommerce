@@ -15,20 +15,22 @@ export default function Signup() {
   const [buttonDisabled, setButtonDisabled] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  const onSignup = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      const res = await axios.post('/api/users/signup', user)
-      console.log(res.data);
-      toast.success("Account created successfully. Please check your email to verify your account.");
-      setLoading(false)
-      router.push('/auth/login');
-    } catch (error) {
-      console.error("Signup error:", error);
-      toast.error(error.response?.data?.message || "An error occurred during signup.");
-    }
+ // In your signup component, replace the success handler:
+const onSignup = async (e) => {
+  e.preventDefault()
+  setLoading(true)
+  try {
+    const res = await axios.post('/api/users/signup', user)
+    toast.success("Account created successfully. Please check your email to verify your account.");
+    setLoading(false)
+    router.push(`/auth/verify-otp?email=${encodeURIComponent(user.email)}`);
+  } catch (error) {
+    console.error("Signup error:", error);
+    toast.error(error.response?.data?.message || "An error occurred during signup.");
+    setLoading(false)
   }
+}
+
 
   useEffect(() => {
     if (user.username.length > 0 && user.email.length > 0 && user.password.length >= 8) {

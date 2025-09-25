@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema({
     verificationCode:{
         type:String,
     },
+    verificationCodeCreatedAt: Date,
     // mobile:{
     //     unique:true,
     //     type:Number,

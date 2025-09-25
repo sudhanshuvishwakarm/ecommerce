@@ -1,4 +1,5 @@
 'use client';
+
 const AddressCard = ({ getAddress, addressData }) => {
   return (
     <div>
@@ -36,22 +37,3 @@ const AddressCard = ({ getAddress, addressData }) => {
   );
 };
 export default AddressCard;
-// const AddressCard = ({ getAddress, addressData }) => {
-//   return (
-//     <div>
-//       {getAddress ? (
-//         <div className="flex flex-col items-start border rounded-md p-4 bg-gray-50">
-//           <p className="text-xl font-semibold">{addressData.firstname} {addressData.lastname}</p>
-//           <p className="mt-2 text-gray-700">{addressData.address}</p>
-//           <p className="text-gray-700">
-//             {addressData.city}, {addressData.state}, {addressData.postalcode}
-//           </p>
-//           <p className="mt-2 font-semibold">Phone: {addressData.phonenumber}</p>
-//         </div>
-//       ) : (
-//         <p className="text-gray-500">No Recent Address</p>
-//       )}
-//     </div>
-//   );
-// };
-// export default AddressCard;

@@ -12,7 +12,6 @@ export default function page() {
            setVerified(true);
         } catch (err) {
             setError('An error occurred while verifying your email');
-            console.log(err, 'Error in verifyEmail function');
         }
     }
     useEffect(() => {
