@@ -143,66 +143,37 @@ export default function Navigation() {
     }
   }
 
+
+
+
   useEffect(() => {
-  let isMounted = true;
+    let isMounted = true;
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.post('/api/users/me');
+        const response = await axios.get('/api/cart');
+        setCartItems(response.data.cart.totalItem);
+        if (isMounted) {
+          setMe(res.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+        if (isMounted) {
+          setMe(false);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
 
-  const fetchUser = async () => {
-    try {
-      const res = await axios.post('/api/users/me');
-      if (isMounted) setMe(res.data);
-    } catch {
-      if (isMounted) setMe(false);
-    }
-  };
-
-  const fetchCart = async () => {
-    try {
-      const res = await axios.get('/api/cart');
-      if (isMounted) setCartItems(res.data.cart.totalItem);
-    } catch (err) {
-      console.error("Cart fetch failed:", err);
-    }
-  };
-
-  setLoading(true);
-  fetchUser();
-  fetchCart();
-  setLoading(false);
-
-  return () => {
-    isMounted = false;
-  };
-}, []);
-
-  // useEffect(() => {
-  //   let isMounted = true;
-  //   const fetchUserData = async () => {
-  //     try {
-  //       setLoading(true);
-  //       const res = await axios.post('/api/users/me');
-  //       const response = await axios.get('/api/cart');
-
-  //       setCartItems(response.data.cart.totalItem);
-  //       if (isMounted) {
-  //         setMe(res.data);
-  //       }
-  //     } catch (error) {
-  //       console.error("Failed to fetch user data:", error);
-  //       if (isMounted) {
-  //         setMe(false);
-  //       }
-  //     } finally {
-  //       if (isMounted) {
-  //         setLoading(false);
-  //       }
-  //     }
-  //   };
-
-  //   fetchUserData();
-  //   return () => {
-  //     isMounted = false;
-  //   };
-  // }, []);
+    fetchUserData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="bg-white">

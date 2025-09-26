@@ -1,6 +1,7 @@
 import Cart from "../../../models/cartModel.js";
 import CartItem from "../../../models/cartItemModel.js";
 import getDataFromToken from "../../../utils/getDataFromToken.js";
+import Product from "../../../models/productModel.js";
 import { NextResponse } from "next/server";
 import { connectDB } from "../../../dbConfig/dbconnection.js";
 connectDB();
@@ -63,7 +64,6 @@ export async function POST(request) {
 }
 
 
-
 export async function GET(request) {
     try {
         const userId = await getDataFromToken(request);
@@ -72,25 +72,34 @@ export async function GET(request) {
             return NextResponse.json({ message: "User not authenticated" }, { status: 401 });
         }
 
-        const cart = await Cart.findOne({ user: userId })
+        let cart = await Cart.findOne({ user: userId })
             .populate({
                 path: 'cartItems',
                 populate: {
                     path: 'product',
-                    model: 'products'
+                    model: 'products' // Change 'products' to 'Product'
                 }
             });
 
+        // If no cart exists, return empty cart without creating in database
         if (!cart) {
             return NextResponse.json({ 
-                cart: null, 
-                message: "Cart not found" 
+                cart: {
+                    user: userId,
+                    cartItems: [],
+                    totalPrice: 0,
+                    totalItem: 0,
+                    totalDiscountPrice: 0,
+                    discounte: 0,
+                    _id: null
+                } 
             });
         }
 
         return NextResponse.json({ cart });
 
     } catch (error) {
+        console.error("Cart GET error:", error);
         return NextResponse.json({ 
             message: "Error fetching cart", 
             error: error.message 
