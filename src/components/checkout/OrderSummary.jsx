@@ -221,7 +221,7 @@ export default function OrderSummary({ onBack, addressData, userAddress, onEditA
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Discount</span>
-              <span className="text-green-600">-₹{cartData.discounte}</span>
+             <span className="text-green-600">-₹{cartData.discounte.toFixed(3)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Delivery Charges</span>
@@ -230,12 +230,12 @@ export default function OrderSummary({ onBack, addressData, userAddress, onEditA
             <div className="border-t border-gray-200 pt-3">
               <div className="flex justify-between font-semibold text-lg">
                 <span>Total Amount</span>
-                <span>₹{cartData.totalDiscountPrice}</span>
+                <span>₹{cartData.totalDiscountPrice.toFixed(3)}</span>
               </div>
             </div>
             {cartData.discounte > 0 && (
               <div className="text-green-600 text-sm">
-                You will save ₹{cartData.discounte} on this order
+                You will save ₹{cartData.discounte.toFixed(3)} on this order
               </div>
             )}
           </div>
