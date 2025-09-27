@@ -292,7 +292,7 @@ const handleAddToCart = async () => {
                 </svg>
                 <li>
                   <Link 
-                    href={`/category/${product.category.category1}`}
+                    href={`/product?category1=${product.category.category1}`}
                     className="text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors duration-200"
                   >
                     {product.category.category1}
@@ -303,7 +303,7 @@ const handleAddToCart = async () => {
                 </svg>
                 <li>
                   <Link 
-                    href={`/category/${product.category.category1}/${product.category.category2}`}
+                    href={`/product?category1=${product.category.category1}&category2=${product.category.category2}`}
                     className="text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors duration-200"
                   >
                     {product.category.category2}

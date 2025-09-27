@@ -18,6 +18,7 @@ export default function Checkout() {
   const [activeStep, setActiveStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [userAddress, setUserAddress] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [addressData, setAddressData] = useState({
     firstName: "",
     lastName: "",
@@ -28,9 +29,31 @@ export default function Checkout() {
     mobile: ""
   });
 
+  const [cartData, setCartData] = useState(null);
+  const [cartLoading, setCartLoading] = useState(false);
+
+  // Check authentication and fetch existing address
   useEffect(() => {
     checkAuthAndFetchAddress();
+    fetchCartData();
   }, []);
+
+  const fetchCartData = async () => {
+    try {
+      setCartLoading(true);
+      const response = await axios.get('/api/cart');
+      if (response.data.cart) {
+        setCartData(response.data.cart);
+      } else {
+        setCartData({ totalPrice: 0, totalItem: 0, totalDiscountPrice: 0, discounte: 0, cartItems: [] });
+      }
+    } catch (error) {
+      console.error('Error fetching cart data:', error);
+      setCartData({ totalPrice: 0, totalItem: 0, totalDiscountPrice: 0, discounte: 0, cartItems: [] });
+    } finally {
+      setCartLoading(false);
+    }
+  };
 
   const checkAuthAndFetchAddress = async () => {
     try {
@@ -70,6 +93,7 @@ export default function Checkout() {
         setUserAddress(response.data.address);
         setAddressData(data);
         setActiveStep(2);
+        setIsEditing(false);
         toast.success(response.data.message);
       }
     } catch (error) {
@@ -92,6 +116,9 @@ export default function Checkout() {
       if (response.data.address) {
         setUserAddress(response.data.address);
         setAddressData(data);
+        // Stay on order summary after update
+        setActiveStep(2);
+        setIsEditing(false);
         toast.success(response.data.message);
       }
     } catch (error) {
@@ -122,6 +149,7 @@ export default function Checkout() {
         mobile: ""
       });
       setActiveStep(1);
+      setIsEditing(false);
       toast.success("Address deleted successfully");
     } catch (error) {
       if (error.response?.status === 401) {
@@ -137,10 +165,12 @@ export default function Checkout() {
 
   const handleBack = () => {
     setActiveStep(1);
+    setIsEditing(false);
   };
 
   const handleEditAddress = () => {
     setActiveStep(1);
+    setIsEditing(true);
   };
 
   if (loading) {
@@ -162,6 +192,7 @@ export default function Checkout() {
           <p className="text-gray-600 mt-2">Complete your purchase</p>
         </div>
 
+        {/* Progress Steps */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <div className="flex justify-between relative">
             <div className="absolute top-4 left-0 right-0 h-1 bg-gray-200 -z-0">
@@ -189,13 +220,13 @@ export default function Checkout() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
+          {/* Main Content */}
           <div className="lg:w-2/3">
             {activeStep === 1 ? (
               <DeliveryAddressForm 
-                onNext={handleAddressSubmit} 
+                onNext={isEditing ? handleAddressUpdate : handleAddressSubmit}
                 initialData={addressData}
-                isUpdate={!!userAddress}
-                onUpdate={handleAddressUpdate}
+                isUpdate={!!userAddress && isEditing}
                 loading={loading}
               />
             ) : activeStep === 2 ? (
@@ -210,61 +241,103 @@ export default function Checkout() {
             ) : null}
           </div>
 
+          {/* Side Panel Order Summary */}
           <div className="lg:w-1/3">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
+            <div className="bg-white rounded-xl shadow-sm p-6 sticky top-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h3>
               
-              <div className="mb-4">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-600">Items (3)</span>
-                  <span>₹4,697</span>
+              {cartLoading ? (
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                 </div>
-                
-                <div className="space-y-2 mt-3 max-h-40 overflow-y-auto">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="flex items-center gap-2 text-sm">
-                      <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                        <span className="text-xs text-gray-500">{item}</span>
+              ) : cartData && cartData.cartItems && cartData.cartItems.length > 0 ? (
+                <>
+                  <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
+                    {cartData.cartItems.map((item, index) => (
+                      <div key={item._id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                            <img 
+                              src={item.product?.imageUrl || '/api/placeholder/50/50'} 
+                              alt={item.product?.title || 'Product'}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {item.product?.title || 'Product'}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                              <span>Qty: {item.quantity}</span>
+                              <span>•</span>
+                              <span>{item.size}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-sm font-semibold text-gray-900">₹{item.discountedPrice?.toLocaleString()}</p>
+                        </div>
                       </div>
-                      <div className="flex-1 truncate">
-                        <p className="truncate">Product Name {item}</p>
-                      </div>
-                      <span className="text-[#4f39f6] font-medium">₹900</span>
+                    ))}
+                  </div>
+
+                  <div className="space-y-3 pt-4 border-t border-gray-200">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal ({cartData.totalItem} items)</span>
+                      <span className="font-medium">₹{cartData.totalPrice?.toLocaleString()}</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="space-y-2 border-t border-gray-200 pt-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Discount</span>
-                  <span className="text-[#4f39f6]">-₹4,697</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Delivery</span>
-                  <span className="text-[#4f39f6]">FREE</span>
-                </div>
-              </div>
-              
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <div className="flex justify-between font-semibold">
-                  <span>Total Amount</span>
-                  <span>₹0</span>
-                </div>
-              </div>
+                    
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Discount</span>
+                      <span className="text-green-600 font-medium">-₹{cartData.discounte?.toLocaleString()}</span>
+                    </div>
+                    
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Shipping</span>
+                      <span className="text-green-600 font-medium">FREE</span>
+                    </div>
+                    
+                    <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-gray-200">
+                      <span>Total</span>
+                      <span>₹{cartData.totalDiscountPrice?.toLocaleString()}</span>
+                    </div>
+                  </div>
 
-              <button
-                className="w-full bg-[#4f39f6] text-white py-3 px-4 rounded-md hover:bg-[#3d2ed4] disabled:opacity-50 disabled:cursor-not-allowed mt-6 font-medium transition-colors"
-                disabled={activeStep < 2}
-              >
-                Proceed to Payment
-              </button>
+                  <button
+                    className="w-full bg-[#4f39f6] text-white py-3 px-4 rounded-lg hover:bg-[#3d2ed4] disabled:opacity-50 disabled:cursor-not-allowed mt-6 font-medium transition-colors"
+                    onClick={() => router.push('/payment')}
+                    disabled={activeStep < 2 || cartLoading}
+                  >
+                    Proceed to Payment
+                  </button>
 
-              <div className="mt-4 p-3 bg-green-50 rounded-lg">
-                <p className="text-xs text-[#4f39f6] text-center">
-                  You saved ₹4,697 on this order!
-                </p>
-              </div>
+                  {cartData.discounte > 0 && (
+                    <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                      <p className="text-sm text-green-700 font-medium text-center">
+                        You're saving ₹{cartData.discounte?.toLocaleString()} on this order!
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                  </div>
+                  <p className="text-lg font-medium text-gray-900 mb-2">Your cart is empty</p>
+                  <p className="text-gray-500 mb-6">Add some items to proceed with checkout</p>
+                  <button
+                    onClick={() => router.push('/')}
+                    className="bg-[#4f39f6] text-white px-6 py-3 rounded-lg hover:bg-[#3d2ed4] transition-colors font-medium"
+                  >
+                    Continue Shopping
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -272,146 +345,3 @@ export default function Checkout() {
     </div>
   );
 }
-// 'use client';
-// import React, { useState } from 'react';
-// import DeliveryAddressForm from '../../../components/checkout/DeliveryAddressForm.jsx';
-// import OrderSummary from '../../../components/checkout/OrderSummary.jsx';
-// import { toast } from 'react-toastify';
-// const steps = [
-//   { label: 'Login', number: 1 },
-//   { label: 'Delivery Address', number: 2 },
-//   { label: 'Order Summary', number: 3 },
-//   { label: 'Payment', number: 4 }
-// ];
-
-// export default function Checkout() {
-//   const [activeStep, setActiveStep] = useState(1);
-//   const [addressData, setAddressData] = useState({
-//     firstname: "",
-//     lastname: "",
-//     address: "",
-//     city: "",
-//     state: "",
-//     postalcode: "",
-//     phonenumber: ""
-//   });
-
-//   const handleAddressSubmit = (data) => {
-//     setAddressData(data);
-//     setActiveStep(2);
-//   };
-
-//   const handleBack = () => {
-//     setActiveStep(1);
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gray-50 py-8">
-//       <div className="container mx-auto px-4 max-w-6xl">
-//         <div className="text-center mb-8">
-//           <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
-//           <p className="text-gray-600 mt-2">Complete your purchase</p>
-//         </div>
-
-//         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-//           <div className="flex justify-between relative">
-//             <div className="absolute top-4 left-0 right-0 h-1 bg-gray-200 -z-0">
-//               <div 
-//                 className="h-full bg-[#4f39f6] transition-all duration-300" 
-//                 style={{ width: `${(activeStep / (steps.length - 1)) * 100}%` }}
-//               ></div>
-//             </div>
-
-//             {steps.map((step, index) => (
-//               <div key={step.label} className="flex flex-col items-center z-10">
-//                 <div
-//                   className={`w-8 h-8 rounded-full flex items-center justify-center 
-//                     ${index <= activeStep ? 'bg-[#4f39f6] text-white' : 'bg-gray-200 text-gray-600'}
-//                     font-medium text-sm`}
-//                 >
-//                   {step.number}
-//                 </div>
-//                 <span className={`mt-2 text-xs font-medium ${index <= activeStep ? 'text-[#4f39f6]' : 'text-gray-500'}`}>
-//                   {step.label}
-//                 </span>
-//               </div>
-//             ))}
-//           </div>
-//         </div>
-
-//         <div className="flex flex-col lg:flex-row gap-8">
-//           <div className="lg:w-2/3">
-//             {activeStep === 1 ? (
-//               <DeliveryAddressForm 
-//                 onNext={handleAddressSubmit} 
-//                 initialData={addressData}
-//               />
-//             ) : activeStep === 2 ? (
-//               <OrderSummary 
-//                 onBack={handleBack} 
-//                 addressData={addressData}
-//               />
-//             ) : null}
-//           </div>
-
-//           <div className="lg:w-1/3">
-//             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-//               <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
-              
-//               <div className="mb-4">
-//                 <div className="flex justify-between text-sm mb-2">
-//                   <span className="text-gray-600">Items (3)</span>
-//                   <span>₹4,697</span>
-//                 </div>
-                
-//                 <div className="space-y-2 mt-3 max-h-40 overflow-y-auto">
-//                   {[1, 2, 3].map((item) => (
-//                     <div key={item} className="flex items-center gap-2 text-sm">
-//                       <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-//                         <span className="text-xs text-gray-500">{item}</span>
-//                       </div>
-//                       <div className="flex-1 truncate">
-//                         <p className="truncate">Product Name {item}</p>
-//                       </div>
-//                       <span className="text-[#4f39f6] font-medium">₹900</span>
-//                     </div>
-//                   ))}
-//                 </div>
-//               </div>
-              
-//               <div className="space-y-2 border-t border-gray-200 pt-4">
-//                 <div className="flex justify-between text-sm">
-//                   <span className="text-gray-600">Discount</span>
-//                   <span className="text-[#4f39f6]">-₹4,697</span>
-//                 </div>
-//                 <div className="flex justify-between text-sm">
-//                   <span className="text-gray-600">Delivery</span>
-//                   <span className="text-[#4f39f6]">FREE</span>
-//                 </div>
-//               </div>
-              
-//               <div className="border-t border-gray-200 pt-4 mt-4">
-//                 <div className="flex justify-between font-semibold">
-//                   <span>Total Amount</span>
-//                   <span>₹0</span>
-//                 </div>
-//               </div>
-
-//               <button
-//                 className="w-full bg-[#4f39f6] text-white py-3 px-4 rounded-md hover:bg-[#4f39f6] mt-6 font-medium"
-//               >
-//                 Proceed to Payment
-//               </button>
-
-//               <div className="mt-4 p-3 bg-green-50 rounded-lg">
-//                 <p className="text-xs text-[#4f39f6] text-center">
-//                   You saved ₹4,697 on this order!
-//                 </p>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }

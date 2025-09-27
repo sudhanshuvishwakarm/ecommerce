@@ -43,7 +43,6 @@ const Cart = () => {
     } catch (error) {
       if (error.response?.status === 401) {
         toast.error("Please login to view your cart");
-        router.push('/auth/login');
       } else {
         console.error('Error fetching cart:', error);
         toast.error("Failed to load cart");

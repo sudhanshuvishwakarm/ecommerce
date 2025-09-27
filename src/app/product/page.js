@@ -16,9 +16,8 @@ import {
 } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { ChevronDownIcon, FunnelIcon, MinusIcon, PlusIcon, Squares2X2Icon } from '@heroicons/react/20/solid'
-import ProductCard from '../../../../../components/product/ProductCard.jsx'
-import { usePathname } from 'next/navigation.js'
-import Loading from '../../../../../components/loader/Loading.jsx'
+import ProductCard from '../../components/product/ProductCard.jsx'
+import Loading from '../../components/loader/Loading.jsx'
 
 const sortOptions = [
   { name: 'Most Popular', href: '#', current: true },
@@ -99,11 +98,10 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-export default function ProductsPage() {
+export default function ProductsPage({searchParams}) {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [products, setProducts] = useState([])
   const [status, setStatus] = useState('idle')
-  const pathname = usePathname();
   useEffect(() => {
     if (status === 'idle') {
       fetchProducts()
@@ -113,12 +111,14 @@ export default function ProductsPage() {
   
   const fetchProducts = async () => {
     try {
-      let categories = pathname.split('/').reverse()
-      const category3 = categories[0]
-      const category2 = categories[1]
-      const category1 = categories[2]
-      let category ={ category1, category2, category3 };
       setStatus('loading')
+      const search = await searchParams;
+      console.log(search)
+      const category = {
+        category1: search.category1 || '',
+        category2: search.category2 || '',
+        category3: search.category3 || '',
+      }
       const response = await axios.post(`/api/product/getProductsByCategory`, category)
       setProducts(response.data)
       setStatus('succeeded')

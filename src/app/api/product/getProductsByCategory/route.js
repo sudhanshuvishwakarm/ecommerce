@@ -4,29 +4,77 @@ import Category from "../../../../models/categoryModel.js";
 import { connectDB } from "../../../../dbConfig/dbconnection.js";
 
 connectDB();
-
 export async function POST(request) {
   try {
-    const { category1, category2, category3 } = await request.json();
+    const reqBody = await request.json();
+    const { category1, category2, category3 } = reqBody;
+    console.log(category1, category2, category3);
+    console.log(reqBody);
 
-    const categories = await Category.find({
-      category1,
-      ...(category2 && { category2 }),
-      ...(category3 && { category3 })
-    });
-
-    if (!categories || categories.length === 0) {
-      return NextResponse.json(
-        { message: "Category not found" },
-        { status: 404 }
-      );
+    if (category3) {
+      const categories = await Category.find({ category1, category2, category3 });
+      if (!categories || categories.length === 0) {
+        return NextResponse.json(
+          { message: "Product Not Available!" },
+          { status: 404 }
+        );
+      }
+      const categoryIds = categories.map((cat) => cat._id);
+      const products = await Product.find({ category: { $in: categoryIds } });
+      return NextResponse.json(products);
     }
-    const categoryIds = categories.map((cat) => cat._id);
-    const products = await Product.find({ category: { $in: categoryIds } });
+    if (category2) {
+      const categories = await Category.find({ category1, category2 });
+      if (!categories || categories.length === 0) {
+        return NextResponse.json(
+          { message: "Product Not Available!" },
+          { status: 404 }
+        );
+      }
+      const categoryIds = categories.map((cat) => cat._id);
+      const products = await Product.find({ category: { $in: categoryIds } });
+      return NextResponse.json(products);
+    }
 
-    return NextResponse.json(products);
+    if (category1) {
+      const categories = await Category.find({ category1 });
+       if (!categories || categories.length === 0) {
+        return NextResponse.json(
+          { message: "Product Not Available!" },
+          { status: 404 }
+        );
+      }
+      const categoryIds = categories.map((cat) => cat._id);
+      const products = await Product.find({ category: { $in: categoryIds } });
+      return NextResponse.json(products);
+    }
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
+
+// export async function POST(request) {
+//   try {
+//     const { category1, category2, category3 } = await request.json();
+
+//     const categories = await Category.find({
+//       category1,
+//       ...(category2 && { category2 }),
+//       ...(category3 && { category3 })
+//     });
+
+//     if (!categories || categories.length === 0) {
+//       return NextResponse.json(
+//         { message: "Category not found" },
+//         { status: 404 }
+//       );
+//     }
+//     const categoryIds = categories.map((cat) => cat._id);
+//     const products = await Product.find({ category: { $in: categoryIds } });
+
+//     return NextResponse.json(products);
+//   } catch (error) {
+//     return NextResponse.json({ error: error.message }, { status: 500 });
+//   }
+// }
 
