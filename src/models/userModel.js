@@ -1,30 +1,30 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-    username:{
-        type:String,
-        required:true
+    username: {
+        type: String,
+        required: true
     },
-    password:{
-        type:String,
-        required:true
+    password: {
+        type: String,
+        required: true
     },
-    email:{
-        unique:true,
-        type:String,
-        required:true
+    email: {
+        unique: true,
+        type: String,
+        required: true
     },
-    role:{
-        type:String,
-        required:true,
-        default:"CUSTOMER"
+    role: {
+        type: String,
+        required: true,
+        default: "CUSTOMER"
     },
-    isVerified:{
-        type:Boolean,
-        default:false
+    isVerified: {
+        type: Boolean,
+        default: false
     },
-    verificationCode:{
-        type:String,
+    verificationCode: {
+        type: String,
     },
     verificationCodeCreatedAt: Date,
     // mobile:{
@@ -32,27 +32,27 @@ const userSchema = new mongoose.Schema({
     //     type:Number,
     //     required:true,
     // },
-    adress:[{
+    address: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:"addresses"
-    }],
-    paymentInformation:[{
+        ref: "addresses"
+    },
+    paymentInformation: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref:"payment_information"
+        ref: "payment_information"
     }],
-    ratings:[{
+    ratings: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref:"ratings"
+        ref: "ratings"
     }],
-    reviews:[{
+    reviews: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref:"reviews"
+        ref: "reviews"
     }],
-    createdAt:{
-        type:Date,
-        default:Date.now()
+    createdAt: {
+        type: Date,
+        default: Date.now()
     }
 })
 
-const User =mongoose.models.users ||  mongoose.model("users",userSchema);
+const User = mongoose.models.users || mongoose.model("users", userSchema);
 export default User;

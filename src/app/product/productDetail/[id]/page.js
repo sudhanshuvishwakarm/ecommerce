@@ -8,6 +8,7 @@ import ProductReviewCard from '../../../../components/product/ProductReviewCard.
 import { usePathname, useRouter } from 'next/navigation.js'
 import axios from 'axios'
 import Loading from '../../../../components/loader/Loading.jsx'
+import { toast } from 'react-toastify'
 
 
 function classNames(...classes) {
@@ -130,10 +131,10 @@ const handleAddToCart = async () => {
         const response = await axios.post('/api/cart/', cartData);
         
         if (response.data && response.data.success) {
-            alert('Product added to cart successfully!');
+            toast.success('Product added to cart successfully!');
             console.log('Cart update successful:', response.data);
         } else {
-            alert('Product added to cart!');
+            toast.success('Product added to cart!');
             console.log('Response received:', response.data);
         }
         
