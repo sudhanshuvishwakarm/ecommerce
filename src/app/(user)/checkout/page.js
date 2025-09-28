@@ -36,7 +36,7 @@ export default function Checkout() {
   useEffect(() => {
     checkAuthAndFetchAddress();
     fetchCartData();
-  }, []);
+  }, [addressData]);
 
   const fetchCartData = async () => {
     try {
@@ -316,7 +316,7 @@ export default function Checkout() {
                   {cartData.discounte > 0 && (
                     <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
                       <p className="text-sm text-green-700 font-medium text-center">
-                        You're saving ₹{cartData.discounte?.toLocaleString()} on this order!
+                        You are saving ₹{cartData.discounte?.toLocaleString()} on this order!
                       </p>
                     </div>
                   )}

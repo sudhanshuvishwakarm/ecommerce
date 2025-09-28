@@ -234,7 +234,7 @@ const Cart = () => {
                 {discount > 0 && (
                   <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
                     <p className="text-sm text-green-700 font-medium text-center">
-                      You're saving ₹{discount.toLocaleString()} on this order!
+                      You are saving ₹{discount.toLocaleString()} on this order!
                     </p>
                   </div>
                 )}
