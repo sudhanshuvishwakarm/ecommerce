@@ -36,7 +36,7 @@ const Footer = () => {
   }
 
   return (
-    <footer className="bg-[#4f39f6] text-white">
+    <footer className="bg-[#4f39f7] text-white">
       {/* Newsletter Section */}
      
 

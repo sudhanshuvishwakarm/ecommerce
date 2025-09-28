@@ -11,7 +11,7 @@ const ProductCard = ({ data }) => {
       <div className="relative w-full h-80 overflow-hidden bg-gray-50">
         <img 
           src={data.imageUrl} 
-          className="w-full h-full  group-hover:scale-105 transition-transform duration-300" 
+          className="w-full h-full   transition-transform duration-300" 
           alt={data.title} 
           style={
             {objectFit: 'contain'}

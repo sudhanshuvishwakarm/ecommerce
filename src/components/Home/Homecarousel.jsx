@@ -49,7 +49,7 @@ const Homecarousel = ({ carousalData }) => {
     return (
       <div className="my-12">
         <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl md:text-3xl font-bold text-[#4f39f6] mb-2">
             {carousalData.heading}
           </h2>
           <div className="w-20 h-1 bg-[#4f39f6] rounded-full"></div>
