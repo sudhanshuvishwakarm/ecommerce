@@ -23,7 +23,7 @@ const ProductCard = ({ data }) => {
       <div className="w-full px-5 py-4 flex flex-col flex-1">       
         {/* Title */}
         <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 mb-1 leading-tight">
-          {data.title}
+          {data.title.length > 25 ? data.title.slice(0, 25) + "..." : data.title}
         </h3>
         
         {/* Description - Single Line */}
