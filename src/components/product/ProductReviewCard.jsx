@@ -48,38 +48,3 @@ const ProductReviewCard = ({ review }) => {
 }
 
 export default ProductReviewCard
-// import { StarIcon } from "@heroicons/react/24/solid" 
-
-// function classNames(...classes) {
-//   return classes.filter(Boolean).join(' ')
-// }
-
-// const ProductReviewCard = ({ review }) => {
-//   return (
-//     <div className="flex gap-4 p-5">
-//       <div className="flex-shrink-0">
-//         <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
-//           {review?.name?.charAt(0) || 'U'}
-//         </div>
-//       </div>
-//       <div>
-//         <p className="text-sm text-gray-600">{review?.date || ''}</p>
-//         <div className="flex items-center">
-//           {[0, 1, 2, 3, 4].map((rating) => (
-//             <StarIcon
-//               key={rating}
-//               className={classNames(
-//                 review?.rating > rating ? 'text-yellow-400' : 'text-gray-300',
-//                 'h-5 w-5 flex-shrink-0'
-//               )}
-//               aria-hidden="true"
-//             />
-//           ))}
-//         </div>
-//         <p className="text-base text-gray-900">{review?.comment || ''}</p>
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default ProductReviewCard

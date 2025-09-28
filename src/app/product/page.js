@@ -113,7 +113,6 @@ export default function ProductsPage({searchParams}) {
     try {
       setStatus('loading')
       const search = await searchParams;
-      console.log(search)
       const category = {
         category1: search.category1 || '',
         category2: search.category2 || '',

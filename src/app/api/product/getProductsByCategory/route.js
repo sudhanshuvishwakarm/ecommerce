@@ -8,8 +8,7 @@ export async function POST(request) {
   try {
     const reqBody = await request.json();
     const { category1, category2, category3 } = reqBody;
-    console.log(category1, category2, category3);
-    console.log(reqBody);
+  
 
     if (category3) {
       const categories = await Category.find({ category1, category2, category3 });
@@ -52,29 +51,3 @@ export async function POST(request) {
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
-
-// export async function POST(request) {
-//   try {
-//     const { category1, category2, category3 } = await request.json();
-
-//     const categories = await Category.find({
-//       category1,
-//       ...(category2 && { category2 }),
-//       ...(category3 && { category3 })
-//     });
-
-//     if (!categories || categories.length === 0) {
-//       return NextResponse.json(
-//         { message: "Category not found" },
-//         { status: 404 }
-//       );
-//     }
-//     const categoryIds = categories.map((cat) => cat._id);
-//     const products = await Product.find({ category: { $in: categoryIds } });
-
-//     return NextResponse.json(products);
-//   } catch (error) {
-//     return NextResponse.json({ error: error.message }, { status: 500 });
-//   }
-// }
-
