@@ -1,3 +1,4 @@
+import Footer from "../../components/Footer/Footer.jsx";
 import Navigation from "../../components/Header/Navigation.jsx";
 export const metadata = {
   title: "Create Next App",
@@ -9,6 +10,7 @@ export default function RootLayout({ children }) {
     <>
       <Navigation />
       {children}
+      <Footer/>
     </>
   );
 }
