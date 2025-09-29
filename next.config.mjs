@@ -1,9 +1,5 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-    experimental: {
-        esmExternals: true, // May help with ESM compatibility
-    },
-};
+const nextConfig = {};
 
 export default nextConfig;
 
