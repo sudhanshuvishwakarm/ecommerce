@@ -36,7 +36,7 @@ export default function Checkout() {
   useEffect(() => {
     checkAuthAndFetchAddress();
     fetchCartData();
-  }, [addressData]);
+  }, []);
 
   const fetchCartData = async () => {
     try {

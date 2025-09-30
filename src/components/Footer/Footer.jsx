@@ -37,13 +37,10 @@ const Footer = () => {
 
   return (
     <footer className="bg-[#4f39f7] text-white">
-      {/* Newsletter Section */}
      
 
-      {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-          {/* Company Info */}
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center space-x-2 mb-6">
               <img
@@ -80,7 +77,6 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Shop Links */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Shop</h3>
             <ul className="space-y-2">
@@ -97,7 +93,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Customer Service */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Customer Service</h3>
             <ul className="space-y-2">
@@ -114,7 +109,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Support */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Support</h3>
             <ul className="space-y-2">
@@ -131,7 +125,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Company */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Company</h3>
             <ul className="space-y-2">
@@ -148,11 +141,7 @@ const Footer = () => {
             </ul>
           </div>
         </div>
-
-      
       </div>
-
-      {/* Bottom Bar */}
       <div className="bg-[#4f39f6] bg-opacity-20 border-t border-white border-opacity-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
@@ -173,7 +162,6 @@ const Footer = () => {
                 Cookie Policy
               </Link>
             </div>
-            
             <div className="text-center md:text-right">
               <p className="text-white text-opacity-60 text-sm">
                 Designed by <span className="font-semibold text-white">Sudhanshu Vishwakarma</span>
