@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Providers } from "../redux/Providers.jsx";
 import { ToastContainer } from "react-toastify";
 
 export const metadata = {
@@ -14,7 +15,7 @@ export default function RootLayout({ children }) {
         </head>
       <body>
         
-        {children}
+        <Providers>{children}</Providers>
         <ToastContainer/>
       </body>
     </html>

@@ -1,51 +1,47 @@
 'use client'
-import axios from 'axios'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Autoplay } from 'swiper/modules'
 import { ChevronLeft, ChevronRight, AlertCircle, Package } from 'lucide-react'
 import Loading from '../../components/loader/Loading.jsx'
 import ProductCard from '../product/ProductCard.jsx'
-import { toast } from 'react-toastify'
+import { fetchProductsByCategory, clearError } from '../../redux/slices/productSlice.js'
 
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 
 const Homecarousel = ({ carousalData }) => {
-  const category = {
-    category1: carousalData.category1,
-    category2: carousalData.category2,
-    category3: carousalData.category3
-  }
-  
-  const [products, setProducts] = useState([])
-  const [status, setStatus] = useState('idle')
+  const dispatch = useDispatch()
+  const { products, loading, error } = useSelector(state => state.products)
 
   useEffect(() => {
-    fetchProducts()
-  }, [carousalData])
-
-  const fetchProducts = async () => {
-    try {
-      setStatus('loading')
-      
-      const response = await axios.post(`/api/product/getProductsByCategory`, category)
-      
-      if (response.data && Array.isArray(response.data)) {
-        setProducts(response.data)
-        setStatus('succeeded')
-      } else {
-        throw new Error('Invalid response format')
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error)
-      setStatus('failed')
-      toast.error('Failed to load products')
+    const category = {
+      category1: carousalData.category1 || '',
+      category2: carousalData.category2 || '',
+      category3: carousalData.category3 || ''
     }
+    dispatch(fetchProductsByCategory(category))
+  }, [carousalData, dispatch])
+
+  useEffect(() => {
+    if (error) {
+      console.error('Error fetching products:', error)
+      dispatch(clearError())
+    }
+  }, [error, dispatch])
+
+  const handleRetry = () => {
+    const category = {
+      category1: carousalData.category1 || '',
+      category2: carousalData.category2 || '',
+      category3: carousalData.category3 || ''
+    }
+    dispatch(fetchProductsByCategory(category))
   }
 
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="my-12">
         <div className="mb-8">
@@ -61,7 +57,7 @@ const Homecarousel = ({ carousalData }) => {
     )
   }
 
-  if (status === 'failed') {
+  if (error) {
     return (
       <div className="my-12">
         <div className="mb-8">
@@ -78,7 +74,7 @@ const Homecarousel = ({ carousalData }) => {
             Failed to load products
           </div>
           <button
-            onClick={fetchProducts}
+            onClick={handleRetry}
             className="px-6 py-3 bg-[#4f39f6] text-white rounded-lg hover:bg-[#3d2ed4] transition-colors font-medium"
           >
             Try Again
@@ -88,7 +84,7 @@ const Homecarousel = ({ carousalData }) => {
     )
   }
 
-  if (products.length === 0 && status === 'succeeded') {
+  if (products.length === 0) {
     return (
       <div className="my-12">
         <div className="mb-8">
@@ -115,7 +111,6 @@ const Homecarousel = ({ carousalData }) => {
             {carousalData.heading}
           </h2>
           <div className="w-20 h-1 bg-[#4f39f6] rounded-full mb-2"></div>
-        
         </div>
       </div>
 
@@ -164,7 +159,6 @@ const Homecarousel = ({ carousalData }) => {
           ))}
         </Swiper>
 
-        {/* Custom Navigation Buttons */}
         <button
           className="swiper-button-prev-custom border-2 border-[#4f39f6] absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white shadow-lg rounded-full flex items-center justify-center text-gray-600 hover:text-[#4f39f6] hover:shadow-xl transition-all duration-300 opacity-0 opacity-100 -translate-x-2 group-hover:translate-x-0"
         >
@@ -181,7 +175,6 @@ const Homecarousel = ({ carousalData }) => {
       <style jsx global>{`
         .swiper-pagination-bullet {
           background-color: #d1d5db;
-          
           opacity: 1;
         }
         .swiper-pagination-bullet-active {

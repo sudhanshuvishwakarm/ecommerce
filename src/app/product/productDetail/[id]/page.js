@@ -1,15 +1,22 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { RadioGroup } from '@headlessui/react'
 import { StarIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
-import Image from 'next/image'
 import ProductCard from '../../../../components/product/ProductCard.jsx'
 import ProductReviewCard from '../../../../components/product/ProductReviewCard.jsx'
 import { usePathname, useRouter } from 'next/navigation.js'
 import axios from 'axios'
 import Loading from '../../../../components/loader/Loading.jsx'
 import { toast } from 'react-toastify'
+import { 
+  fetchProductDetail, 
+  fetchSimilarProducts, 
+  clearCurrentProduct,
+  clearError 
+} from '../../../../redux/slices/productSlice.js'
+import { addToCart } from '../../../../redux/slices/cartSlice.js'
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -17,11 +24,16 @@ function classNames(...classes) {
 
 export default function ProductDetails() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const pathname = usePathname();
+  const productId = pathname.split('/').reverse()[0];
+
+  const { currentProduct: product, similarProducts, productDetailLoading, similarProductsLoading, error } = useSelector(state => state.products);
+  const { updatingItems } = useSelector(state => state.cart);
+
   const [selectedColor, setSelectedColor] = useState(null)
   const [selectedSize, setSelectedSize] = useState(null)
   const [mainImage, setMainImage] = useState('')
-  const [product, setProduct] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [reviewData, setReviewData] = useState({
     rating: 0,
@@ -30,12 +42,6 @@ export default function ProductDetails() {
     email: ''
   })
   const [quantity, setQuantity] = useState(1)
-  const [cartLoading, setCartLoading] = useState(false)
-  const [similarProducts, setSimilarProducts] = useState([])
-  const [similarProductsLoading, setSimilarProductsLoading] = useState(false)
-  
-  const pathname = usePathname();
-  const productId = pathname.split('/').reverse()[0];
 
   const dummyRating = {
     average: 4.5,
@@ -52,75 +58,51 @@ export default function ProductDetails() {
     ]
   }
 
-  const fetchProductDetail = useCallback(async () => {
-    try {
-      setLoading(true)
-      const res = await axios.post('/api/product/productDetail', { productId })
-      setProduct(res.data)
-      
-      if (res.data.imageUrl) {
-        setMainImage(res.data.imageUrl)
-      }
-      if (res.data.sizes && res.data.sizes.length > 0) {
-        setSelectedSize(res.data.sizes[0])
-      }
-      
-    } catch (error) {
-      console.error('Error fetching product:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [productId])
-
-  const fetchSimilarProducts = useCallback(async () => {
-    if (!product?.category) return;
-    
-    try {
-      setSimilarProductsLoading(true)
-      const category = {
-        category1: product.category.category1 || '',
-        category2: product.category.category2 || '',
-        category3: product.category.category3 || '',
-      }
-      const response = await axios.post(`/api/product/getProductsByCategory`, category)
-      
-      // Filter out the current product and limit to 4 products
-      const filteredProducts = response.data
-        .filter(item => item._id !== productId)
-        .slice(0, 4)
-      
-      setSimilarProducts(filteredProducts)
-    } catch (error) {
-      console.error('Error fetching similar products:', error)
-    } finally {
-      setSimilarProductsLoading(false)
-    }
-  }, [product?.category, productId])
-
   useEffect(() => {
-    fetchProductDetail()
-  }, [fetchProductDetail])
+    dispatch(fetchProductDetail(productId))
+    return () => {
+      dispatch(clearCurrentProduct())
+    }
+  }, [dispatch, productId])
 
   useEffect(() => {
     if (product) {
-      fetchSimilarProducts()
+      if (product.imageUrl) {
+        setMainImage(product.imageUrl)
+      }
+      if (product.sizes && product.sizes.length > 0) {
+        setSelectedSize(product.sizes[0])
+      }
+      if (product.category) {
+        const category = {
+          category1: product.category.category1 || '',
+          category2: product.category.category2 || '',
+          category3: product.category.category3 || '',
+        }
+        dispatch(fetchSimilarProducts({ category, currentProductId: productId }))
+      }
     }
-  }, [fetchSimilarProducts, product])
+  }, [product, dispatch, productId])
+
+  useEffect(() => {
+    if (error) {
+      console.error('Error loading product:', error)
+      dispatch(clearError())
+    }
+  }, [error, dispatch])
 
   const handleAddToCart = async () => {
     if (!selectedSize) {
-        alert('Please select a size');
+        toast.error('Please select a size');
         return;
     }
 
     if (!product) {
-        alert('Product information not available');
+        toast.error('Product information not available');
         return;
     }
 
     try {
-        setCartLoading(true);
-        
         const cartData = {
             id: product._id || productId,
             size: selectedSize.name,
@@ -139,17 +121,12 @@ export default function ProductDetails() {
         
     } catch (error) {
         console.error('Error adding to cart:', error);
-        router.push('/auth/login');
-        if (error.response) {
-            const errorMessage = error.response.data?.message || 'Failed to add to cart';
-            console.error('Server error response:', error.response.data);
-        } else if (error.request) {
-            console.error('No response received:', error.request);
+        if (error.response?.status === 401) {
+            toast.error('Please login first');
+            router.push('/auth/login');
         } else {
-            console.error('Error message:', error.message);
+            toast.error('Failed to add to cart');
         }
-    } finally {
-        setCartLoading(false);
     }
   };
 
@@ -163,15 +140,12 @@ export default function ProductDetails() {
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault()
-    // Here you would typically send the review to your API
     setShowReviewModal(false)
     setReviewData({ rating: 0, comment: '', name: '', email: '' })
   }
 
-  if (loading) {
-    return (
-      <Loading/>
-    )
+  if (productDetailLoading) {
+    return <Loading/>
   }
 
   if (!product) {
@@ -185,7 +159,6 @@ export default function ProductDetails() {
     )
   }
 
-  // Create image gallery array from single imageUrl
   const imageGallery = [
     { src: product.imageUrl, alt: product.title },
     { src: product.imageUrl, alt: product.title + ' - View 2' },
@@ -193,9 +166,10 @@ export default function ProductDetails() {
     { src: product.imageUrl, alt: product.title + ' - View 4' }
   ]
 
+  const isAddingToCart = updatingItems.includes(product._id)
+
   return (
     <div className="bg-white">
-      {/* Review Modal */}
       {showReviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent border-2 border-[#4f39f6] shadow-md bg-opacity-50 backdrop-blur-sm">
           <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4  ">
@@ -272,7 +246,6 @@ export default function ProductDetails() {
       )}
 
       <div className="pt-6">
-        {/* Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="px-4 sm:px-6 lg:px-8">
           <ol className="flex items-center max-w-7xl mx-auto space-x-2 overflow-x-auto py-2">
             <li className="flex items-center">
@@ -320,11 +293,9 @@ export default function ProductDetails() {
           </ol>
         </nav>
 
-        {/* Product Section */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto mt-6">
-          {/* Image Gallery */}
           <div className="lg:pr-8">
-            <div className="aspect-h-4 aspect-w-3 overflow-hidden rounded-xl bg-gray-100 shadow-sm relative">
+            <div className="aspect-h-4 aspect-w-3 overflow-hidden rounded-xl  shadow-sm relative">
               <img
                 src={mainImage || product.imageUrl}
                 alt={product.title}
@@ -344,7 +315,6 @@ export default function ProductDetails() {
                   <img
                     src={image.src}
                     alt={image.alt}
-               
                     className="object-cover object-center p-2"
                     sizes="(max-width: 768px) 25vw, 12.5vw"
                   />
@@ -353,9 +323,7 @@ export default function ProductDetails() {
             </div>
           </div>
 
-          {/* Product Info */}
           <div className="lg:pt-8">
-            {/* Category */}
             <div className="mb-2">
               <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">
                 {product.category?.category1} › {product.category?.category2} › {product.category?.category3}
@@ -373,7 +341,6 @@ export default function ProductDetails() {
             
             <p className="text-lg text-gray-600 mt-2 leading-relaxed">{product.description}</p>
 
-            {/* Price */}
             <div className="mt-6 flex items-center">
               <p className="text-3xl font-bold text-gray-900">₹{product.price}</p>
               <s className="ml-3 text-xl text-gray-500">₹{product.discountedPrice}</s>
@@ -382,7 +349,6 @@ export default function ProductDetails() {
               </span>
             </div>
 
-            {/* Reviews */}
             <div className="mt-6">
               <div className="flex items-center">
                 <div className="flex">
@@ -404,7 +370,6 @@ export default function ProductDetails() {
               </div>
             </div>
 
-            {/* Size Selector */}
             {product.sizes && product.sizes.length > 0 && (
               <div className="mt-8">
                 <div className="flex items-center justify-between">
@@ -470,7 +435,6 @@ export default function ProductDetails() {
               </div>
             )}
 
-            {/* Quantity and Add to Cart */}
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <div className="flex items-center border border-gray-300 rounded-lg">
                 <button 
@@ -489,14 +453,14 @@ export default function ProductDetails() {
               </div>
               <button 
                 onClick={handleAddToCart}
-                disabled={cartLoading || product.quantity === 0}
+                disabled={isAddingToCart || product.quantity === 0}
                 className={`flex-1 px-8 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md flex items-center justify-center ${
-                  cartLoading || product.quantity === 0
+                  isAddingToCart || product.quantity === 0
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-indigo-600 text-white hover:bg-indigo-700'
                 }`}
               >
-                {cartLoading ? (
+                {isAddingToCart ? (
                   <>
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -515,7 +479,6 @@ export default function ProductDetails() {
               </button>
             </div>
 
-            {/* Product Details */}
             <div className="mt-10 border-t border-gray-200 pt-8">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Product Details</h3>
               <div className="space-y-4">
@@ -536,7 +499,6 @@ export default function ProductDetails() {
           </div>
         </section>
 
-        {/* Ratings and Reviews */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
           <h2 className="text-2xl font-bold text-gray-900 text-center mb-12">Customer Reviews</h2>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -574,7 +536,6 @@ export default function ProductDetails() {
           </div>
         </section>
 
-        {/* Similar Products */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 mb-16">
           <h2 className="text-2xl font-bold text-gray-900 text-center mb-12">You May Also Like</h2>
           {similarProductsLoading ? (
@@ -602,18 +563,19 @@ export default function ProductDetails() {
       </div>
     </div>
   )
-}// 'use client'
-// import { useState, useEffect } from 'react'
+}
+// 'use client'
+// import { useState, useEffect, useCallback } from 'react'
 // import { RadioGroup } from '@headlessui/react'
 // import { StarIcon } from '@heroicons/react/20/solid'
 // import Link from 'next/link'
+// import Image from 'next/image'
 // import ProductCard from '../../../../components/product/ProductCard.jsx'
 // import ProductReviewCard from '../../../../components/product/ProductReviewCard.jsx'
 // import { usePathname, useRouter } from 'next/navigation.js'
 // import axios from 'axios'
 // import Loading from '../../../../components/loader/Loading.jsx'
 // import { toast } from 'react-toastify'
-
 
 // function classNames(...classes) {
 //   return classes.filter(Boolean).join(' ')
@@ -635,6 +597,8 @@ export default function ProductDetails() {
 //   })
 //   const [quantity, setQuantity] = useState(1)
 //   const [cartLoading, setCartLoading] = useState(false)
+//   const [similarProducts, setSimilarProducts] = useState([])
+//   const [similarProductsLoading, setSimilarProductsLoading] = useState(false)
   
 //   const pathname = usePathname();
 //   const productId = pathname.split('/').reverse()[0];
@@ -654,42 +618,7 @@ export default function ProductDetails() {
 //     ]
 //   }
 
-//   const similarProducts = [
-//     { 
-//       id: 1, 
-//       name: 'Basic Tee', 
-//       price: '₹299', 
-//       image: 'https://m.media-amazon.com/images/I/61DGAlvxRLL._SY550_.jpg',
-//       category: 'Clothing'
-//     },
-//     { 
-//       id: 2, 
-//       name: 'Premium Tee', 
-//       price: '₹499', 
-//       image: 'https://m.media-amazon.com/images/I/71RfHvqcLlL._SX569_.jpg',
-//       category: 'Clothing'
-//     },
-//     { 
-//       id: 3, 
-//       name: 'Sport Tee', 
-//       price: '₹399', 
-//       image: 'https://m.media-amazon.com/images/I/71wJjHSED9L._SX569_.jpg',
-//       category: 'Clothing'
-//     },
-//     { 
-//       id: 4, 
-//       name: 'Casual Tee', 
-//       price: '₹349', 
-//       image: 'https://m.media-amazon.com/images/I/812moQIIO7L._SX569_.jpg',
-//       category: 'Clothing'
-//     },
-//   ]
-
-//   useEffect(() => {
-//     fetchProductDetail()
-//   }, [productId])
-
-//   const fetchProductDetail = async () => {
+//   const fetchProductDetail = useCallback(async () => {
 //     try {
 //       setLoading(true)
 //       const res = await axios.post('/api/product/productDetail', { productId })
@@ -698,7 +627,7 @@ export default function ProductDetails() {
 //       if (res.data.imageUrl) {
 //         setMainImage(res.data.imageUrl)
 //       }
-//             if (res.data.sizes && res.data.sizes.length > 0) {
+//       if (res.data.sizes && res.data.sizes.length > 0) {
 //         setSelectedSize(res.data.sizes[0])
 //       }
       
@@ -707,8 +636,44 @@ export default function ProductDetails() {
 //     } finally {
 //       setLoading(false)
 //     }
-//   }
-// const handleAddToCart = async () => {
+//   }, [productId])
+
+//   const fetchSimilarProducts = useCallback(async () => {
+//     if (!product?.category) return;
+    
+//     try {
+//       setSimilarProductsLoading(true)
+//       const category = {
+//         category1: product.category.category1 || '',
+//         category2: product.category.category2 || '',
+//         category3: product.category.category3 || '',
+//       }
+//       const response = await axios.post(`/api/product/getProductsByCategory`, category)
+      
+//       // Filter out the current product and limit to 4 products
+//       const filteredProducts = response.data
+//         .filter(item => item._id !== productId)
+//         .slice(0, 4)
+      
+//       setSimilarProducts(filteredProducts)
+//     } catch (error) {
+//       console.error('Error fetching similar products:', error)
+//     } finally {
+//       setSimilarProductsLoading(false)
+//     }
+//   }, [product?.category, productId])
+
+//   useEffect(() => {
+//     fetchProductDetail()
+//   }, [fetchProductDetail])
+
+//   useEffect(() => {
+//     if (product) {
+//       fetchSimilarProducts()
+//     }
+//   }, [fetchSimilarProducts, product])
+
+//   const handleAddToCart = async () => {
 //     if (!selectedSize) {
 //         alert('Please select a size');
 //         return;
@@ -729,7 +694,6 @@ export default function ProductDetails() {
 //             price: product.price,
 //             discountedPrice: product.discountedPrice
 //         };
-
 
 //         const response = await axios.post('/api/cart/', cartData);
         
@@ -753,7 +717,7 @@ export default function ProductDetails() {
 //     } finally {
 //         setCartLoading(false);
 //     }
-// };
+//   };
 
 //   const increaseQuantity = () => {
 //     setQuantity(prev => prev + 1)
@@ -790,9 +754,9 @@ export default function ProductDetails() {
 //   // Create image gallery array from single imageUrl
 //   const imageGallery = [
 //     { src: product.imageUrl, alt: product.title },
-//     { src: "1", alt: product.title + ' - View 2' },
-//     { src: "2", alt: product.title + ' - View 3' },
-//     { src: "3", alt: product.title + ' - View 4' }
+//     { src: product.imageUrl, alt: product.title + ' - View 2' },
+//     { src: product.imageUrl, alt: product.title + ' - View 3' },
+//     { src: product.imageUrl, alt: product.title + ' - View 4' }
 //   ]
 
 //   return (
@@ -926,11 +890,12 @@ export default function ProductDetails() {
 //         <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto mt-6">
 //           {/* Image Gallery */}
 //           <div className="lg:pr-8">
-//             <div className="aspect-h-4 aspect-w-3 overflow-hidden rounded-xl bg-gray-100 shadow-sm">
+//             <div className="aspect-h-4 aspect-w-3 overflow-hidden rounded-xl bg-gray-100 shadow-sm relative">
 //               <img
 //                 src={mainImage || product.imageUrl}
 //                 alt={product.title}
-//                 className="h-full w-full object-cover object-center"
+//                 className="object-cover object-center"
+//                 sizes="(max-width: 768px) 100vw, 50vw"
 //               />
 //             </div>
 //             <div className="grid grid-cols-4 gap-3 mt-4">
@@ -938,14 +903,16 @@ export default function ProductDetails() {
 //                 <button
 //                   key={index}
 //                   onClick={() => setMainImage(image.src)}
-//                   className={`aspect-h-1 aspect-w-1 overflow-hidden rounded-lg bg-gray-100 shadow-sm transition-all duration-200 ${
+//                   className={`aspect-h-1 aspect-w-1 overflow-hidden rounded-lg bg-gray-100 shadow-sm transition-all duration-200 relative ${
 //                     mainImage === image.src ? 'ring-2 ring-indigo-500' : 'hover:ring-2 hover:ring-gray-300'
 //                   }`}
 //                 >
 //                   <img
 //                     src={image.src}
 //                     alt={image.alt}
-//                     className="h-full w-full object-cover object-center p-2"
+               
+//                     className="object-cover object-center p-2"
+//                     sizes="(max-width: 768px) 25vw, 12.5vw"
 //                   />
 //                 </button>
 //               ))}
@@ -1176,11 +1143,27 @@ export default function ProductDetails() {
 //         {/* Similar Products */}
 //         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 mb-16">
 //           <h2 className="text-2xl font-bold text-gray-900 text-center mb-12">You May Also Like</h2>
-//           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-//             {similarProducts.map((product) => (
-//               <ProductCard key={product.id} data={product} />
-//             ))}
-//           </div>
+//           {similarProductsLoading ? (
+//             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+//               {[1, 2, 3, 4].map((index) => (
+//                 <div key={index} className="animate-pulse">
+//                   <div className="bg-gray-200 aspect-w-1 aspect-h-1 rounded-lg mb-4"></div>
+//                   <div className="h-4 bg-gray-200 rounded mb-2"></div>
+//                   <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+//                 </div>
+//               ))}
+//             </div>
+//           ) : similarProducts.length > 0 ? (
+//             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+//               {similarProducts.map((similarProduct) => (
+//                 <ProductCard key={similarProduct._id} data={similarProduct} />
+//               ))}
+//             </div>
+//           ) : (
+//             <div className="text-center py-8">
+//               <p className="text-gray-500">No similar products found</p>
+//             </div>
+//           )}
 //         </section>
 //       </div>
 //     </div>
