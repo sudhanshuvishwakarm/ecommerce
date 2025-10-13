@@ -14,6 +14,7 @@ import {
   setIsEditing 
 } from "../../../redux/slices/addressSlice.js";
 import { fetchCart } from "../../../redux/slices/cartSlice.js";
+import axios from "axios";
 
 const steps = [
   { label: 'Login', number: 1 },
@@ -42,6 +43,43 @@ export default function Checkout() {
     }
   }, [address]);
 
+  const paymentHandler = async (amount) => {
+    const res = await axios.post('/api/users/me');
+    console.log("Initiating payment for amount:", amount);
+    const {data:keyData} = await axios.get('/api/payment/process');
+    const key = keyData.key;
+    console.log(key);
+    const {data:orderData} = await axios.post('/api/payment/process', { amount });
+    const order = orderData.order;
+    console.log(order);
+     const options = {
+        key,
+        amount, 
+        currency: 'INR',
+        name: 'Ecommerce Shop',
+        description: 'Razorpay Payment',
+        order_id: order.id,
+        callback_url: '/api/payment/paymentVerification', 
+        prefill: {
+          name: address.firstName + " " + address.lastName,
+          email: res.data.user.email,
+          contact: address.mobile
+        },
+        theme: {
+          color: '#4f39f6'
+        },
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+      rzp.on('payment.failed', function (response){
+        toast.error("Payment failed. Please try again.");
+      });
+      rzp.on('payment.success', function (response){
+        toast.success("Payment successful!");
+      });
+      console.log("Razorpay options:", options);
+  }
   useEffect(() => {
     if (addressError) {
       if (addressError.status === 401) {
@@ -242,10 +280,10 @@ export default function Checkout() {
 
                   <button
                     className="w-full bg-[#4f39f6] text-white py-3 px-4 rounded-lg hover:bg-[#3d2ed4] disabled:opacity-50 disabled:cursor-not-allowed mt-6 font-medium transition-colors"
-                    onClick={() => router.push('/payment')}
+                    onClick={()=>paymentHandler(totalAmount)}
                     disabled={activeStep < 2 || cartLoading}
                   >
-                    Proceed to Payment
+                    Proceed to Payment 
                   </button>
 
                   {discount > 0 && (
@@ -280,6 +318,7 @@ export default function Checkout() {
     </div>
   );
 }
+
 // 'use client';
 // import React, { useState, useEffect } from 'react';
 // import { useRouter } from 'next/navigation';

@@ -1,4 +1,5 @@
 import "./globals.css";
+import Script from "next/script";
 import { Providers } from "../redux/Providers.jsx";
 import { ToastContainer } from "react-toastify";
 
@@ -17,6 +18,10 @@ export default function RootLayout({ children }) {
         
         <Providers>{children}</Providers>
         <ToastContainer/>
+         <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="afterInteractive" 
+        />
       </body>
     </html>
   );
