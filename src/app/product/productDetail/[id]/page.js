@@ -16,7 +16,8 @@ import {
   clearCurrentProduct,
   clearError 
 } from '../../../../redux/slices/productSlice.js'
-import { addToCart } from '../../../../redux/slices/cartSlice.js'
+
+import { fetchCart } from '../../../../redux/slices/cartSlice.js'
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -112,7 +113,7 @@ export default function ProductDetails() {
         };
 
         const response = await axios.post('/api/cart/', cartData);
-        
+        dispatch(fetchCart());
         if (response.data && response.data.success) {
             toast.success('Product added to cart successfully!');
         } else {

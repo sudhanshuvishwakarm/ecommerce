@@ -65,25 +65,13 @@ export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('/api/users/me');
+      const response = await axios.post('/api/users/me');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
-
-// export const checkAuth = createAsyncThunk(
-//   'auth/checkAuth',
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const response = await axios.post('/api/users/me');
-//       return response.data;
-//     } catch (error) {
-//       return rejectWithValue(error.response?.data || error.message);
-//     }
-//   }
-// );
 
 const initialState = {
   user: null,
@@ -124,7 +112,7 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.user = action.payload.user || action.payload;
+        state.user = action.payload.user || action.payload.data || action.payload;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -151,7 +139,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.otpVerified = true;
         state.isAuthenticated = true;
-        state.user = action.payload.user || action.payload;
+        state.user = action.payload.user || action.payload.data || action.payload;
         state.signupEmail = null;
       })
       .addCase(verifyOTP.rejected, (state, action) => {
@@ -189,7 +177,8 @@ const authSlice = createSlice({
       .addCase(checkAuth.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.user = action.payload.user || action.payload;
+        // Handle different response structures
+        state.user = action.payload.user || action.payload.data || action.payload;
       })
       .addCase(checkAuth.rejected, (state) => {
         state.loading = false;
@@ -275,6 +264,18 @@ export default authSlice.reducer;
 //     }
 //   }
 // );
+
+// // export const checkAuth = createAsyncThunk(
+// //   'auth/checkAuth',
+// //   async (_, { rejectWithValue }) => {
+// //     try {
+// //       const response = await axios.post('/api/users/me');
+// //       return response.data;
+// //     } catch (error) {
+// //       return rejectWithValue(error.response?.data || error.message);
+// //     }
+// //   }
+// // );
 
 // const initialState = {
 //   user: null,

@@ -3,12 +3,14 @@ import cartSlice from "./slices/cartSlice.js";
 import addressSlice from "./slices/addressSlice.js";
 import productsSlice from "./slices/productSlice.js";
 import authSlice from "./slices/authSlice.js";
+import orderSlice from "./slices/orderSlice.js";
 
 export const store = configureStore({
   reducer: {
-     auth: authSlice,
+    auth: authSlice,
     products: productsSlice,
     cart: cartSlice,
-    address: addressSlice
+    address: addressSlice,
+    orders: orderSlice,
   }
 });

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import Order from "../../../../models/orderModel.js";
-import OrderItem from "../../../../models/orderItemsModel.js";
-import Cart from "../../../../models/cartModel.js";
-import getDataFromToken from "../../../../utils/getDataFromToken.js";
-import { connectDB } from "../../../../dbConfig/dbconnection.js";
+import Order from "../../src/models/orderModel.js";
+import OrderItem from "../../src/models/orderItemsModel.js";
+import Cart from "../../src/models/cartModel.js";
+import getDataFromToken from "../../src/utils/getDataFromToken.js";
+import { connectDB } from "../../src/dbConfig/dbconnection.js";
 connectDB();
 export async function POST(request) {
   try {
@@ -16,7 +16,6 @@ export async function POST(request) {
 
     const { shippingAddressId } = await request.json();
 
-    // Get user's cart with populated items
     const cart = await Cart.findOne({ user: userId })
       .populate({
         path: "cartItems",

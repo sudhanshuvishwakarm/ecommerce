@@ -43,7 +43,7 @@ const orderSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    totalDiscountedPrice: { // This should match what you're setting in the code
+    totalDiscountedPrice: { 
         type: Number,
         required: true
     },  

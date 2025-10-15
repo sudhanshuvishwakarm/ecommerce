@@ -81,10 +81,10 @@ const cartSlice = createSlice({
       })
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.loading = false;
-        
+
         if (action.payload.cart && action.payload.cart.cartItems) {
           state.cartData = action.payload.cart;
-          
+
           state.cartItems = action.payload.cart.cartItems.map(item => ({
             id: item._id,
             productId: item.product?._id,
@@ -119,7 +119,7 @@ const cartSlice = createSlice({
           discounte: 0
         };
       })
-      
+
       // Update Quantity
       .addCase(updateCartItemQuantity.pending, (state, action) => {
         const cartItemId = action.meta.arg.cartItemId;
@@ -130,12 +130,12 @@ const cartSlice = createSlice({
       .addCase(updateCartItemQuantity.fulfilled, (state, action) => {
         const cartItemId = action.meta.arg.cartItemId;
         state.updatingItems = state.updatingItems.filter(id => id !== cartItemId);
-        
+
         // Update local state with new data
         if (action.payload.cart) {
           state.cartData = action.payload.cart;
-          state.cartItems = state.cartItems.map(item => 
-            item.id === cartItemId 
+          state.cartItems = state.cartItems.map(item =>
+            item.id === cartItemId
               ? { ...item, quantity: action.meta.arg.quantity }
               : item
           );
@@ -146,7 +146,7 @@ const cartSlice = createSlice({
         state.updatingItems = state.updatingItems.filter(id => id !== cartItemId);
         state.error = action.payload;
       })
-      
+
       // Remove Item
       .addCase(removeCartItem.pending, (state, action) => {
         const cartItemId = action.meta.arg;
@@ -158,7 +158,7 @@ const cartSlice = createSlice({
         const cartItemId = action.payload;
         state.updatingItems = state.updatingItems.filter(id => id !== cartItemId);
         state.cartItems = state.cartItems.filter(item => item.id !== cartItemId);
-        
+
         // Update cart data (you might want to refetch cart here)
         state.cartData.totalItem -= 1;
         // Note: For accurate totals, you might want to call fetchCart again
