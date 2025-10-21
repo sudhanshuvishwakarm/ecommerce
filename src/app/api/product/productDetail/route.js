@@ -2,7 +2,9 @@
 import { connectDB } from "../../../../dbConfig/dbconnection.js";
 import Product from "../../../../models/productModel.js";
 import { NextResponse } from "next/server";
-import User from "../../../../models/userModel.js";
+import Category from "../../../../models/categoryModel.js";
+import Rating from "../../../../models/ratingModel.js";
+import Review from "../../../../models/reviewModel.js";
 connectDB();
 
 export async function POST(request) {
@@ -19,14 +21,14 @@ export async function POST(request) {
         path: "ratings",
         populate: {
           path: "user",
-          select: "username email _id"
+          select: "username email"
         }
       })
       .populate({
         path: "reviews",
         populate: {
           path: "user",
-          select: "username email _id"
+          select: "username email"
         }
       });
 

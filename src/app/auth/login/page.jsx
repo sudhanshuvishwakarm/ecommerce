@@ -44,7 +44,13 @@ export default function Login() {
     try {
       await dispatch(login(user)).unwrap();
       toast.success('Login successful');
-      router.push('/');
+      const previousPage = document.referrer;
+
+      if (previousPage.includes('/auth/signup') || !previousPage) {
+        router.push('/');
+      } else {
+        router.back();
+      }
     } catch (error) {
       console.error('Login error:', error);
     }
@@ -54,13 +60,13 @@ export default function Login() {
     <div className="flex min-h-screen">
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12">
         <div className="w-full max-w-md">
-         <a href="/">
-           <img
-            alt="Your Company"
-            src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
-            className="mx-auto h-10 w-auto"
-          />
-         </a>
+          <a href="/">
+            <img
+              alt="Your Company"
+              src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
+              className="mx-auto h-10 w-auto"
+            />
+          </a>
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Sign in to your account
@@ -173,8 +179,8 @@ export default function Login() {
           </div>
         </div>
       </div>
- {loading && (
-        <Loading/>
+      {loading && (
+        <Loading />
       )}
       <div className="hidden lg:block lg:w-1/2 bg-gray-100">
         <div className="relative h-full w-full">
@@ -294,9 +300,9 @@ export default function Login() {
 
 //             <button
 //               type="submit"
-//               className={`group relative flex w-full justify-center rounded-md border border-transparent 
-//                   ${buttonDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer"} 
-//                   py-2 px-4 text-sm font-medium text-white 
+//               className={`group relative flex w-full justify-center rounded-md border border-transparent
+//                   ${buttonDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer"}
+//                   py-2 px-4 text-sm font-medium text-white
 //                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
 //             >
 //               Sign in

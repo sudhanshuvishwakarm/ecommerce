@@ -30,7 +30,12 @@ function VerifyOTPContent() {
   useEffect(() => {
     if (otpVerified) {
       toast.success('Account verified successfully!');
-      router.push('/');
+      const previousPage = document.referrer; 
+      if (previousPage.includes('/auth/signup') || !previousPage) {
+        router.push('/');
+      } else {
+        router.back();
+      }
     }
   }, [otpVerified, router]);
 
