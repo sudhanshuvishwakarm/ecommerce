@@ -5,6 +5,7 @@ function classNames(...classes) {
 }
 
 const ProductReviewCard = ({ review }) => {
+  console.log(" cccccccccccccccccccc",review)
   return (
     <div className="flex gap-4 p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
       <div className="flex-shrink-0">

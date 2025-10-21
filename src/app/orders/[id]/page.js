@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchOrders } from '../../../redux/slices/orderSlice.js';
+import { submitRatingReview, clearSuccess, fetchProductReviews } from '../../../redux/slices/ratingReviewSlice.js';
 import OrderTracker from '../../../components/order/OrderTracker.jsx';
 import Loading from '../../../components/loader/Loading.jsx';
 import { toast } from 'react-toastify';
@@ -14,6 +15,7 @@ const OrderDetail = () => {
 
   const dispatch = useDispatch();
   const { orders, loading } = useSelector(state => state.orders);
+  const { loading: ratingLoading, error: ratingError, success: ratingSuccess } = useSelector(state => state.ratingReview);
   
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
@@ -30,6 +32,28 @@ const OrderDetail = () => {
       router.push('/orders');
     }
   }, [order, loading, orders.length, router]);
+
+  // Handle rating success
+  useEffect(() => {
+    if (ratingSuccess) {
+      toast.success("Thank you for your review!");
+      setShowRatingModal(false);
+      setRating(0);
+      setReview('');
+      setCurrentProduct(null);
+      dispatch(clearSuccess());
+    }
+  }, [ratingSuccess, dispatch]);
+
+  // Handle rating error
+  useEffect(() => {
+    if (ratingError) {
+      const errorMessage = typeof ratingError === 'string' 
+        ? ratingError 
+        : ratingError.message || 'Failed to submit review';
+      toast.error(errorMessage);
+    }
+  }, [ratingError]);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -49,12 +73,22 @@ const OrderDetail = () => {
   };
 
   const handleSubmitRating = () => {
+    if (rating === 0 && review.trim().length === 0) {
+      toast.error("Please provide at least a rating or review");
+      return;
+    }
+
     if (rating === 0) {
       toast.error("Please select a rating");
       return;
     }
-    toast.success("Thank you for your review!");
-    setShowRatingModal(false);
+
+    dispatch(submitRatingReview({
+      rating: rating,
+      review: review.trim(),
+      productId: currentProduct.product._id,
+      orderItemId: currentProduct._id
+    }));
   };
 
   if (loading || !order) {
@@ -148,10 +182,10 @@ const OrderDetail = () => {
 
                     {/* Rating Button */}
                     {status.toLowerCase() === 'delivered' && (
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 flex items-center">
                         <button 
                           onClick={() => handleRateProduct(item)}
-                          className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:text-indigo-700 font-medium transition-colors duration-200"
+                          className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:text-indigo-700 font-medium transition-colors duration-200 border border-indigo-200 rounded-lg hover:bg-indigo-50"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -218,7 +252,7 @@ const OrderDetail = () => {
                 <h3 className="font-medium text-gray-900 mb-2">Payment</h3>
                 <p className="text-gray-600">{order.paymentDetails?.paymentMethod || 'Cash on Delivery'}</p>
                 <p className="text-sm text-green-600 mt-1">
-                  {order.paymentDetails?.paymentStatus }
+                  {order.paymentDetails?.paymentStatus}
                 </p>
               </div>
             </div>
@@ -251,47 +285,59 @@ const OrderDetail = () => {
 
       {/* Rating Modal */}
       {showRatingModal && currentProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Rate {currentProduct.product?.title || 'Product'}
             </h2>
             
             {/* Star Rating */}
-            <div className="flex justify-center mb-4 gap-2">
+            <div className="flex justify-center mb-6 gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   onClick={() => setRating(star)}
-                  className="text-3xl transition-transform hover:scale-110"
+                  className="text-4xl transition-all hover:scale-125 cursor-pointer"
+                  type="button"
                 >
-                  {star <= rating ? '★' : '☆'}
+                  {star <= rating ? (
+                    <span className="text-yellow-400">★</span>
+                  ) : (
+                    <span className="text-gray-300">☆</span>
+                  )}
                 </button>
               ))}
             </div>
+
+            {rating > 0 && (
+              <div className="text-center mb-4 text-sm text-gray-600">
+                Your rating: {rating} out of 5 stars
+              </div>
+            )}
 
             {/* Review Textarea */}
             <textarea
               value={review}
               onChange={(e) => setReview(e.target.value)}
-              placeholder="Share your experience with this product..."
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="Share your experience with this product (optional)..."
+              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:outline-none"
               rows={4}
             />
 
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowRatingModal(false)}
-                className="flex-1 py-2 px-4 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+                disabled={ratingLoading}
+                className="flex-1 py-2 px-4 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmitRating}
-                disabled={rating === 0}
+                disabled={rating === 0 || ratingLoading}
                 className="flex-1 py-2 px-4 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
-                Submit Review
+                {ratingLoading ? 'Submitting...' : 'Submit Review'}
               </button>
             </div>
           </div>
@@ -301,13 +347,14 @@ const OrderDetail = () => {
   );
 };
 
-export default OrderDetail;// 'use client';
+export default OrderDetail;
+// 'use client';
 // import { useEffect, useState } from 'react';
 // import { useParams, useRouter } from 'next/navigation';
 // import { useSelector, useDispatch } from 'react-redux';
 // import { fetchOrders } from '../../../redux/slices/orderSlice.js';
-// import Loading from '../../../components/loader/Loading.jsx';
 // import OrderTracker from '../../../components/order/OrderTracker.jsx';
+// import Loading from '../../../components/loader/Loading.jsx';
 // import { toast } from 'react-toastify';
 
 // const OrderDetail = () => {
@@ -323,21 +370,16 @@ export default OrderDetail;// 'use client';
 //   const [rating, setRating] = useState(0);
 //   const [review, setReview] = useState('');
 
-//   // Find the specific order
+//   // Find the specific order from Redux state
 //   const order = orders.find(o => o._id === orderId);
 
 //   useEffect(() => {
-//     if (orders.length === 0) {
-//       dispatch(fetchOrders());
-//     }
-//   }, [dispatch, orders.length]);
-
-//   useEffect(() => {
+//     // If order not found and we have orders, navigate back
 //     if (!loading && orders.length > 0 && !order) {
 //       toast.error("Order not found");
 //       router.push('/orders');
 //     }
-//   }, [order, loading, router, orders.length]);
+//   }, [order, loading, orders.length, router]);
 
 //   const formatDate = (dateString) => {
 //     if (!dateString) return 'N/A';
@@ -345,61 +387,8 @@ export default OrderDetail;// 'use client';
 //     return date.toLocaleDateString('en-US', { 
 //       year: 'numeric', 
 //       month: 'long', 
-//       day: 'numeric',
-//       hour: '2-digit',
-//       minute: '2-digit'
-//     });
-//   };
-
-//   const formatDateShort = (dateString) => {
-//     if (!dateString) return 'N/A';
-//     const date = new Date(dateString);
-//     return date.toLocaleDateString('en-US', { 
-//       year: 'numeric', 
-//       month: 'short', 
 //       day: 'numeric'
 //     });
-//   };
-
-//   const getStatusColor = (status) => {
-//     const statusLower = status?.toLowerCase() || 'pending';
-//     switch (statusLower) {
-//       case 'ontheway':
-//       case 'shipped':
-//       case 'confirmed':
-//         return 'text-blue-600 bg-blue-50 border-blue-200';
-//       case 'delivered':
-//         return 'text-green-600 bg-green-50 border-green-200';
-//       case 'cancelled':
-//         return 'text-red-600 bg-red-50 border-red-200';
-//       case 'returned':
-//         return 'text-amber-600 bg-amber-50 border-amber-200';
-//       case 'pending':
-//       case 'placed':
-//         return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-//       default:
-//         return 'text-gray-600 bg-gray-50 border-gray-200';
-//     }
-//   };
-
-//   const getStatusStep = (status) => {
-//     const statusLower = status?.toLowerCase() || 'pending';
-//     switch (statusLower) {
-//       case 'pending':
-//       case 'placed': 
-//         return 0;
-//       case 'confirmed': 
-//         return 1;
-//       case 'shipped': 
-//         return 2;
-//       case 'ontheway':
-//       case 'outfordelivery': 
-//         return 3;
-//       case 'delivered': 
-//         return 4;
-//       default: 
-//         return 0;
-//     }
 //   };
 
 //   const handleRateProduct = (product) => {
@@ -414,7 +403,6 @@ export default OrderDetail;// 'use client';
 //       toast.error("Please select a rating");
 //       return;
 //     }
-//     // Handle rating submission logic here
 //     toast.success("Thank you for your review!");
 //     setShowRatingModal(false);
 //   };
@@ -426,7 +414,7 @@ export default OrderDetail;// 'use client';
 //   const orderItems = order.orderItems || [];
 //   const shippingAddress = order.shippingAddress || {};
 //   const orderId_short = order._id?.slice(-8).toUpperCase() || 'N/A';
-//   const orderStatus = order.orderStatus || 'pending';
+//   const status = order.orderStatus || 'pending';
 
 //   return (
 //     <div className="min-h-screen bg-gray-50 py-8">
@@ -450,12 +438,16 @@ export default OrderDetail;// 'use client';
 //               <div className="flex items-center gap-4 text-sm text-gray-600">
 //                 <span>Order ID: <span className="font-medium text-gray-900">#{orderId_short}</span></span>
 //                 <span>•</span>
-//                 <span>Placed on {formatDateShort(order.createdAt)}</span>
+//                 <span>Placed on {formatDate(order.createdAt)}</span>
 //               </div>
 //             </div>
-//             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border ${getStatusColor(orderStatus)}`}>
-//               <span className="w-2 h-2 rounded-full bg-current"></span>
-//               <span className="font-medium capitalize">{orderStatus}</span>
+//             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium capitalize text-white ${
+//               status.toLowerCase() === 'delivered' ? 'bg-green-600' :
+//               status.toLowerCase() === 'cancelled' ? 'bg-red-600' :
+//               status.toLowerCase() === 'returned' ? 'bg-amber-600' :
+//               'bg-indigo-600'
+//             }`}>
+//               {status}
 //             </div>
 //           </div>
 //         </div>
@@ -466,23 +458,7 @@ export default OrderDetail;// 'use client';
 //             {/* Order Tracker */}
 //             <div className="bg-white rounded-xl shadow-sm p-6">
 //               <h2 className="text-xl font-semibold text-gray-900 mb-6">Order Status</h2>
-//               <OrderTracker activeStep={getStatusStep(orderStatus)} />
-              
-//               {(orderStatus.toLowerCase() === 'ontheway' || orderStatus.toLowerCase() === 'outfordelivery') && order.deliveryDate && (
-//                 <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-//                   <div className="flex items-center gap-3">
-//                     <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-//                     </svg>
-//                     <div>
-//                       <p className="font-medium text-blue-900">Out for delivery</p>
-//                       <p className="text-sm text-blue-700">
-//                         Expected delivery: {formatDateShort(order.deliveryDate)}
-//                       </p>
-//                     </div>
-//                   </div>
-//                 </div>
-//               )}
+//               <OrderTracker orderStatus={status} />
 //             </div>
 
 //             {/* Order Items */}
@@ -516,12 +492,12 @@ export default OrderDetail;// 'use client';
 //                         Seller: <span className="font-medium">{item.product?.brand || 'Unknown'}</span>
 //                       </p>
 //                       <p className="text-lg font-semibold text-gray-900 mt-2">
-//                         ₹{(item.discountedPrice || item.price || 0).toLocaleString()}
+//                         ₹{(item.discountPrice || item.price || 0).toLocaleString()}
 //                       </p>
 //                     </div>
 
 //                     {/* Rating Button */}
-//                     {orderStatus.toLowerCase() === 'delivered' && (
+//                     {status.toLowerCase() === 'delivered' && (
 //                       <div className="flex-shrink-0">
 //                         <button 
 //                           onClick={() => handleRateProduct(item)}
@@ -530,7 +506,7 @@ export default OrderDetail;// 'use client';
 //                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
 //                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
 //                           </svg>
-//                           <span>Rate Product</span>
+//                           <span>Rate</span>
 //                         </button>
 //                       </div>
 //                     )}
@@ -568,7 +544,7 @@ export default OrderDetail;// 'use client';
 //               <div className="space-y-3">
 //                 <div className="flex justify-between">
 //                   <span className="text-gray-600">Items ({orderItems.length})</span>
-//                   <span>₹{orderItems.reduce((total, item) => total + ((item.discountedPrice || item.price || 0) * item.quantity), 0).toLocaleString()}</span>
+//                   <span>₹{orderItems.reduce((total, item) => total + ((item.discountPrice || item.price || 0) * item.quantity), 0).toLocaleString()}</span>
 //                 </div>
 //                 <div className="flex justify-between">
 //                   <span className="text-gray-600">Delivery</span>
@@ -583,40 +559,40 @@ export default OrderDetail;// 'use client';
 //                 <div className="border-t border-gray-200 pt-3">
 //                   <div className="flex justify-between text-lg font-semibold">
 //                     <span>Total</span>
-//                     <span>₹{(order.totalPrice || order.totalDiscountedPrice || 0).toLocaleString()}</span>
+//                     <span>₹{(order.totalDiscountedPrice || order.totalPrice || 0).toLocaleString()}</span>
 //                   </div>
 //                 </div>
 //               </div>
 
 //               <div className="mt-6 pt-4 border-t border-gray-200">
-//                 <h3 className="font-medium text-gray-900 mb-2">Payment Method</h3>
-//                 <p className="text-gray-600">{order.paymentMethod || 'Cash on Delivery'}</p>
+//                 <h3 className="font-medium text-gray-900 mb-2">Payment</h3>
+//                 <p className="text-gray-600">{order.paymentDetails?.paymentMethod || 'Cash on Delivery'}</p>
 //                 <p className="text-sm text-green-600 mt-1">
-//                   {order.paymentStatus === 'paid' ? 'Paid' : 'Payment on Delivery'}
+//                   {order.paymentDetails?.paymentStatus }
 //                 </p>
 //               </div>
 //             </div>
 
-//             {/* Support */}
+//             {/* Actions */}
 //             <div className="bg-white rounded-xl shadow-sm p-6">
-//               <h2 className="text-xl font-semibold text-gray-900 mb-4">Need Help?</h2>
-//               <div className="space-y-3">
-//                 <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors duration-200">
+//               <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
+//               <div className="space-y-2">
+//                 {status.toLowerCase() === 'delivered' && (
+//                   <>
+//                     <button className="w-full p-3 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+//                       <span className="font-medium text-gray-900">Return Item</span>
+//                       <p className="text-sm text-gray-600">Start a return request</p>
+//                     </button>
+//                     <button className="w-full p-3 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+//                       <span className="font-medium text-gray-900">Buy Again</span>
+//                       <p className="text-sm text-gray-600">Reorder items</p>
+//                     </button>
+//                   </>
+//                 )}
+//                 <button className="w-full p-3 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
 //                   <span className="font-medium text-gray-900">Contact Support</span>
-//                   <p className="text-sm text-gray-600 mt-1">Get help with this order</p>
+//                   <p className="text-sm text-gray-600">Get help with order</p>
 //                 </button>
-//                 {orderStatus.toLowerCase() === 'delivered' && (
-//                   <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors duration-200">
-//                     <span className="font-medium text-gray-900">Return Item</span>
-//                     <p className="text-sm text-gray-600 mt-1">Start a return request</p>
-//                   </button>
-//                 )}
-//                 {(orderStatus.toLowerCase() === 'pending' || orderStatus.toLowerCase() === 'confirmed') && (
-//                   <button className="w-full text-left p-3 rounded-lg border border-red-200 hover:border-red-300 hover:bg-red-50 transition-colors duration-200">
-//                     <span className="font-medium text-red-700">Cancel Order</span>
-//                     <p className="text-sm text-red-600 mt-1">Cancel this order</p>
-//                   </button>
-//                 )}
 //               </div>
 //             </div>
 //           </div>
@@ -625,25 +601,22 @@ export default OrderDetail;// 'use client';
 
 //       {/* Rating Modal */}
 //       {showRatingModal && currentProduct && (
-//         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+//         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+
 //           <div className="bg-white rounded-xl p-6 max-w-md w-full">
 //             <h2 className="text-xl font-semibold text-gray-900 mb-4">
 //               Rate {currentProduct.product?.title || 'Product'}
 //             </h2>
             
 //             {/* Star Rating */}
-//             <div className="flex justify-center mb-4">
+//             <div className="flex justify-center mb-4 gap-2">
 //               {[1, 2, 3, 4, 5].map((star) => (
 //                 <button
 //                   key={star}
 //                   onClick={() => setRating(star)}
-//                   className="text-3xl mx-1 transition-transform hover:scale-110"
+//                   className="text-3xl transition-transform hover:scale-110"
 //                 >
-//                   {star <= rating ? (
-//                     <span className="text-yellow-400">⭐</span>
-//                   ) : (
-//                     <span className="text-gray-300">☆</span>
-//                   )}
+//                   {star <= rating ? '★' : '☆'}
 //                 </button>
 //               ))}
 //             </div>
@@ -680,3 +653,4 @@ export default OrderDetail;// 'use client';
 // };
 
 // export default OrderDetail;
+
