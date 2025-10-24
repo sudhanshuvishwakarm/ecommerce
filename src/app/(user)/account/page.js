@@ -34,7 +34,6 @@ const Account = () => {
         setLoading(true);
         const response = await axios.post('/api/users/me');
         setUserData(response.data.user || response.data);
-        console.log("User data:", response.data);
       } catch (error) {
         console.error("Error fetching user data:", error);
         if (error.response?.status === 401) {

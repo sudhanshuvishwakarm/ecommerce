@@ -18,7 +18,6 @@ export async function POST(request) {
     };
 
     const order = await instance.orders.create(options);
-    console.log("Razorpay Order Created:", order);
 
     return NextResponse.json({
       success: true,

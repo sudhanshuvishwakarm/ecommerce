@@ -45,13 +45,10 @@ export default function Checkout() {
 
   const paymentHandler = async (amount) => {
     const res = await axios.post('/api/users/me');
-    console.log("Initiating payment for amount:", amount);
     const {data:keyData} = await axios.get('/api/payment/process');
     const key = keyData.key;
-    console.log(key);
     const {data:orderData} = await axios.post('/api/payment/process', { amount });
     const order = orderData.order;
-    console.log(order);
      const options = {
         key,
         amount, 
@@ -78,7 +75,6 @@ export default function Checkout() {
       rzp.on('payment.success', function (response){
         toast.success("Payment successful!");
       });
-      console.log("Razorpay options:", options);
   }
   useEffect(() => {
     if (addressError) {

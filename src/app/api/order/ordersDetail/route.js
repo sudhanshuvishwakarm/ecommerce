@@ -16,7 +16,6 @@ export async function GET(request){
             );
         }
 
-        console.log("User ID from token:", userId); 
         
         // Fetch orders with all populated fields
         const orders = await Order.find({ user: userId })

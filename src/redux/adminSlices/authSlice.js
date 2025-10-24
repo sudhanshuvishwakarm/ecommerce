@@ -1,0 +1,118 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+
+export const createAdmin = createAsyncThunk(
+  "auth/createAdmin",
+  async ({ username, password }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        "/api/admin/auth/createAdmin",
+        { username, password }
+      );
+      if (response.data.token) {
+        localStorage.setItem("adminToken", response.data.token);
+      }
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+export const loginAdmin = createAsyncThunk(
+  "auth/loginAdmin",
+  async ({ username, password }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        "/api/admin/auth/login",
+        { username, password }
+      );
+      if (response.data.token) {
+        localStorage.setItem("adminToken", response.data.token);
+      }
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+export const logoutAdmin = createAsyncThunk(
+  "auth/logoutAdmin",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get("/api/admin/auth/logout");
+      localStorage.removeItem("adminToken");
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+const initialState = {
+  admin: null,
+  isAuthenticated: typeof window !== 'undefined' && !!localStorage.getItem('adminToken'),
+  loading: false,
+  error: null,
+};
+
+const authSlice = createSlice({
+  name: "auth",
+  initialState,
+  reducers: {
+    clearError: (state) => {
+      state.error = null;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(createAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createAdmin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.admin = action.payload.admin;
+        state.isAuthenticated = true;
+        state.error = null;
+      })
+      .addCase(createAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.isAuthenticated = false;
+      })
+      .addCase(loginAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginAdmin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.admin = action.payload.admin;
+        state.isAuthenticated = true;
+        state.error = null;
+      })
+      .addCase(loginAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.isAuthenticated = false;
+      })
+      .addCase(logoutAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(logoutAdmin.fulfilled, (state) => {
+        state.loading = false;
+        state.admin = null;
+        state.isAuthenticated = false;
+        state.error = null;
+      })
+      .addCase(logoutAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  },
+});
+
+export const { clearError } = authSlice.actions;
+export default authSlice.reducer;

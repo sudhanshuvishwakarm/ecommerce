@@ -8,7 +8,8 @@ import CartItem from "../../../../models/cartItemModel.js";
 import Address from "../../../../models/addressModel.js";
 import getDataFromToken from "../../../../utils/getDataFromToken.js";
 import { connectDB } from "../../../../dbConfig/dbconnection.js";
-
+import User from "../../../../models/userModel.js";
+ await connectDB();
 export async function POST(request) {
   let orderItemsCreated = [];
   
@@ -33,7 +34,7 @@ export async function POST(request) {
     }
 
     console.log("Payment verified successfully!");
-    await connectDB();
+   
 
     // Get user ID from token
     const userId = await getDataFromToken(request);
@@ -116,12 +117,19 @@ export async function POST(request) {
       orderId: order._id.toString(),
       paymentId: razorpay_payment_id,
       signature: razorpay_signature,
-      amount: cart.totalDiscountPrice, // Fixed: matches cart field name
+      amount: cart.totalDiscountPrice, 
       status: "paid",
       paymentDate: new Date()
     });
 
     await payment.save();
+
+     const user = await User.findById(userId);
+    if (user) {
+      user.paymentInformation.push(payment._id);
+      await user.save(); // Added missing await
+    }
+
 
     // Clear user's cart after successful order
     await CartItem.deleteMany({ _id: { $in: cart.cartItems } });
@@ -138,7 +146,7 @@ export async function POST(request) {
 
     console.log("Order created successfully:", order._id);
     console.log("Payment recorded successfully:", payment._id);
-
+   
     return NextResponse.redirect(
       `http://localhost:3000/payment/payment-success?payment_id=${razorpay_payment_id}&order_id=${order._id}`,
       { status: 303 }
@@ -162,36 +170,3 @@ export async function POST(request) {
     });
   }
 }
-// import { NextResponse } from "next/server";
-// import crypto from "crypto";
-
-// export async function POST(request) {
-//   try {
-//     const formData = await request.formData();
-//     const razorpay_order_id = formData.get("razorpay_order_id");
-//     const razorpay_payment_id = formData.get("razorpay_payment_id");
-//     const razorpay_signature = formData.get("razorpay_signature");
-
-//     const sign = razorpay_order_id + "|" + razorpay_payment_id;
-//     const expectedSign = crypto
-//       .createHmac("sha256", process.env.RAZORPAY_API_SECRET)
-//       .update(sign)
-//       .digest("hex");
-
-//     if (razorpay_signature === expectedSign) {
-//       console.log("Payment verified successfully!");
-//       return NextResponse.redirect(
-//         `http://localhost:3000/payment/payment-success?payment_id=${razorpay_payment_id}`,
-//         { status: 303 }
-//       );
-//     } else {
-//       console.log("Invalid payment signature!");
-//       return NextResponse.redirect("http://localhost:3000/payment/payment-fail", {
-//         status: 303,
-//       });
-//     }
-//   } catch (error) {
-//     console.error("Error verifying payment:", error);
-//     return NextResponse.json({ error: error.message }, { status: 500 });
-//   }
-// }
