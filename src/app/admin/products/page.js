@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { fetchAllProducts, deleteProduct, clearSuccess, clearError } from "@/redux/adminSlices/productSlice"
+import { fetchAllProducts, deleteProduct, clearSuccess, clearError } from "../../../redux/adminSlices/productSlice.js"
 import { Trash2, Loader } from "lucide-react"
 import { toast } from "react-toastify"
 

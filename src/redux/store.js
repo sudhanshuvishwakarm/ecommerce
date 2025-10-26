@@ -7,6 +7,7 @@ import orderSlice from "./slices/orderSlice.js";
 import ratingReviewReducer from "./slices/ratingReviewSlice.js";
 import adminAuthSlice from "./adminSlices/authSlice.js";
 import adminProductSlice from "./adminSlices/productSlice.js";
+import adminOrderSlice from "./adminSlices/orderSlice.js";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     adminAuth: adminAuthSlice,
     products: productsSlice,
     adminProduct: adminProductSlice,
+    adminOrder: adminOrderSlice,
     cart: cartSlice,
     address: addressSlice,
     orders: orderSlice,

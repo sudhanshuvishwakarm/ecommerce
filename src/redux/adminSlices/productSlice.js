@@ -48,6 +48,16 @@ export const fetchAllProducts = createAsyncThunk(
       return response.data;
     } catch (error) {
       console.error("Fetch Products Error:", error.response?.data || error.message);
+      
+      // If token expired (401), redirect to login
+      if (error.response?.status === 401) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminTokenTime');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/admin/login';
+        }
+      }
+      
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch products"
       );

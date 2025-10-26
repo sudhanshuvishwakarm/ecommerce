@@ -8,8 +8,6 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 
 connectDB();
-
-// Verify admin token helper
 const verifyAdminToken = (token) => {
   if (!token) {
     return { valid: false, error: "No token found" };
@@ -22,7 +20,6 @@ const verifyAdminToken = (token) => {
   }
 };
 
-// POST - Create Product
 export async function POST(request) {
   try {
     const token = request.cookies.get("adminToken")?.value;
@@ -51,7 +48,6 @@ export async function POST(request) {
       category3,
     } = await request.json();
 
-    // Validation
     const missingFields = [];
     if (!title?.trim()) missingFields.push("title");
     if (!description?.trim()) missingFields.push("description");
@@ -118,7 +114,7 @@ export async function POST(request) {
   }
 }
 
-// GET - Fetch All Products
+
 export async function GET(request) {
   try {
     const token = request.cookies.get("adminToken")?.value;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { X, Plus } from "lucide-react"
-import { createProduct, clearSuccess, clearError, resetProduct } from "@/redux/adminSlices/productSlice"
+import { createProduct, clearSuccess, clearError, resetProduct } from "../../../redux/adminSlices/productSlice.js"
 import { toast } from "react-toastify"
 
 const CATEGORY_OPTIONS = {

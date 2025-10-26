@@ -77,7 +77,7 @@ export default function AdminSidebar() {
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <div
+      <Link href="/admin"
         className={`${
           isOpen ? "w-64" : "w-20"
         } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col`}
@@ -186,7 +186,7 @@ export default function AdminSidebar() {
             </svg>
           </button>
         </div>
-      </div>
+      </Link>
 
       {/* Create Admin Modal */}
       {showCreateAdminModal && (
